@@ -1,0 +1,24 @@
+schema_version: 0.2.0
+record_type: capability_renewal_record
+renewal_id: capability-renewal:demo:001
+grant_id: capability-grant:demo:child-001
+agent_id: agent:worker:001
+authority_domain_id: authority-domain:demo:001
+reviewed_at: '2026-08-04T01:09:00Z'
+issuer:
+  issuer_type: human
+  issuer_id: human:operator:001
+previous_grant_epoch: 1
+new_grant_epoch: 2
+previous_expires_at: '2026-08-04T01:10:00Z'
+requested_expires_at: '2026-08-04T01:15:00Z'
+resulting_expires_at: '2026-08-04T01:15:00Z'
+automatic: false
+checks:
+  grant_active: true
+  renewal_allowed: true
+  within_renewal_count: true
+  extension_within_limit: true
+  origin_unchanged: true
+  revocation_clear: true
+decision: approved
