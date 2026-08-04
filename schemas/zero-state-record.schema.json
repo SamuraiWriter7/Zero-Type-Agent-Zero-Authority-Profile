@@ -1,43 +1,85 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.org/zeroshiki/schemas/zero-state-record.schema.json",
-  "title": "Zero State Record",
   "type": "object",
   "additionalProperties": false,
+  "$id": "https://example.org/zeroshiki/schemas/zero-state-record.schema.json",
+  "title": "Zero State Record",
   "required": [
     "schema_version",
     "record_type",
     "zero_state_id",
     "agent_id",
+    "authority_domain_id",
     "observed_at",
     "state_reason",
+    "revocation_epoch",
     "authority_state",
     "ambient_authority",
     "external_action_allowed",
     "active_capability_grant_ids",
+    "active_execution_token_ids",
     "external_effects",
     "evidence"
   ],
   "properties": {
-    "schema_version": {"const": "0.1.0"},
-    "record_type": {"const": "zero_state_record"},
+    "schema_version": {
+      "const": "0.2.0"
+    },
+    "record_type": {
+      "const": "zero_state_record"
+    },
     "zero_state_id": {
       "type": "string",
       "pattern": "^zero-state:[A-Za-z0-9._:-]+$"
     },
-    "agent_id": {"type": "string", "minLength": 1},
-    "observed_at": {"type": "string", "format": "date-time"},
+    "agent_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authority_domain_id": {
+      "type": "string",
+      "pattern": "^authority-domain:[A-Za-z0-9._:-]+$"
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
     "state_reason": {
       "type": "string",
-      "enum": ["startup", "task_completed", "revocation", "anomaly", "manual_reset"]
+      "enum": [
+        "startup",
+        "task_completed",
+        "revocation",
+        "anomaly",
+        "manual_reset"
+      ]
     },
-    "authority_state": {"const": "zero"},
-    "ambient_authority": {"const": false},
-    "external_action_allowed": {"const": false},
+    "revocation_epoch": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "authority_state": {
+      "const": "zero"
+    },
+    "ambient_authority": {
+      "const": false
+    },
+    "external_action_allowed": {
+      "const": false
+    },
     "active_capability_grant_ids": {
       "type": "array",
       "maxItems": 0,
-      "items": {"type": "string"}
+      "items": {
+        "type": "string"
+      }
+    },
+    "active_execution_token_ids": {
+      "type": "array",
+      "maxItems": 0,
+      "items": {
+        "type": "string"
+      }
     },
     "external_effects": {
       "type": "object",
@@ -51,29 +93,55 @@
         "child_agent_creation"
       ],
       "properties": {
-        "network_access": {"const": false},
-        "file_write": {"const": false},
-        "credential_use": {"const": false},
-        "payment_access": {"const": false},
-        "command_other_agents": {"const": false},
-        "child_agent_creation": {"const": false}
+        "network_access": {
+          "const": false
+        },
+        "file_write": {
+          "const": false
+        },
+        "credential_use": {
+          "const": false
+        },
+        "payment_access": {
+          "const": false
+        },
+        "command_other_agents": {
+          "const": false
+        },
+        "child_agent_creation": {
+          "const": false
+        }
       }
     },
     "evidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["observer_type", "observer_id", "evidence_refs"],
+      "required": [
+        "observer_type",
+        "observer_id",
+        "evidence_refs"
+      ],
       "properties": {
         "observer_type": {
           "type": "string",
-          "enum": ["runtime_guard", "human_auditor", "independent_agent"]
+          "enum": [
+            "runtime_guard",
+            "human_auditor",
+            "independent_agent"
+          ]
         },
-        "observer_id": {"type": "string", "minLength": 1},
+        "observer_id": {
+          "type": "string",
+          "minLength": 1
+        },
         "evidence_refs": {
           "type": "array",
           "minItems": 1,
           "uniqueItems": true,
-          "items": {"type": "string", "minLength": 1}
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     }
