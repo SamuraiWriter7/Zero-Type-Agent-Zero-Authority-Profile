@@ -1,0 +1,31 @@
+schema_version: 0.2.0
+record_type: capability_delegation_receipt
+delegation_id: capability-delegation:fail:scope-escalation-001
+authority_domain_id: authority-domain:demo:001
+parent_grant_id: capability-grant:demo:root-001
+delegator_agent_id: agent:coordinator:001
+child_agent_id: agent:worker:001
+proposed_child_grant_id: capability-grant:fail:child-escalated-001
+delegation_depth: 1
+evaluated_at: '2026-08-04T01:02:00Z'
+delegated_capability:
+  action_type: http_get
+  targets:
+  - https://admin.example.net/private
+  allowed_tools:
+  - tool:http-client:readonly
+delegated_constraints:
+  max_invocations: 1
+  network_destinations:
+  - status.example.org
+  data_classes:
+  - public_status_data
+checks:
+  parent_grant_active: true
+  capability_subset: false
+  constraints_not_widened: true
+  child_agent_allowed: true
+  depth_allowed: true
+  revocation_clear: true
+countersignature_ref: approval:independent-authority:demo-001
+decision: allowed
