@@ -1,0 +1,48 @@
+schema_version: 0.2.0
+record_type: capability_grant
+grant_id: capability-grant:demo:root-001
+grant_kind: root
+agent_id: agent:coordinator:001
+authority_domain_id: authority-domain:demo:001
+issued_revocation_epoch: 0
+grant_epoch: 1
+origin_ref: human-origin:demo-task:001
+issuer:
+  issuer_type: human
+  issuer_id: human:operator:001
+purpose: Allow a coordinator to delegate one read-only public status check.
+capability:
+  action_type: http_get
+  targets:
+  - https://status.example.org/public/health
+  - https://status.example.org/public/metrics
+  allowed_tools:
+  - tool:http-client:readonly
+constraints:
+  max_invocations: 3
+  network_destinations:
+  - status.example.org
+  data_classes:
+  - public_status_data
+valid_from: '2026-08-04T01:00:00Z'
+expires_at: '2026-08-04T01:20:00Z'
+revocable: true
+ambient_authority: false
+parent_grant_id: null
+delegation_receipt_id: null
+delegation:
+  delegable: true
+  max_depth: 1
+  allowed_child_agents:
+  - agent:worker:001
+  requires_independent_countersignature: true
+  self_expansion_allowed: false
+renewal_policy:
+  renewable: false
+  max_renewals: 0
+  max_extension_seconds: 0
+  automatic_renewal: false
+revocation_channel:
+  channel_id: revocation-channel:demo:001
+  propagation_required: true
+status: active
