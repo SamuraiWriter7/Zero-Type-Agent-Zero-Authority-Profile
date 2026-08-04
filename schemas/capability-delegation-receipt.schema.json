@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "$id": "https://example.org/zeroshiki/schemas/capability-delegation-receipt.schema.json",
+  "title": "Capability Delegation Receipt",
+  "required": [
+    "schema_version",
+    "record_type",
+    "delegation_id",
+    "authority_domain_id",
+    "parent_grant_id",
+    "delegator_agent_id",
+    "child_agent_id",
+    "proposed_child_grant_id",
+    "delegation_depth",
+    "evaluated_at",
+    "delegated_capability",
+    "delegated_constraints",
+    "checks",
+    "countersignature_ref",
+    "decision"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.2.0"
+    },
+    "record_type": {
+      "const": "capability_delegation_receipt"
+    },
+    "delegation_id": {
+      "type": "string",
+      "pattern": "^capability-delegation:[A-Za-z0-9._:-]+$"
+    },
+    "authority_domain_id": {
+      "type": "string",
+      "pattern": "^authority-domain:[A-Za-z0-9._:-]+$"
+    },
+    "parent_grant_id": {
+      "type": "string",
+      "pattern": "^capability-grant:[A-Za-z0-9._:-]+$"
+    },
+    "delegator_agent_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "child_agent_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "proposed_child_grant_id": {
+      "type": "string",
+      "pattern": "^capability-grant:[A-Za-z0-9._:-]+$"
+    },
+    "delegation_depth": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4
+    },
+    "evaluated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "delegated_capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_type",
+        "targets",
+        "allowed_tools"
+      ],
+      "properties": {
+        "action_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "allowed_tools": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "delegated_constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_invocations",
+        "network_destinations",
+        "data_classes"
+      ],
+      "properties": {
+        "max_invocations": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "network_destinations": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "data_classes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "parent_grant_active",
+        "capability_subset",
+        "constraints_not_widened",
+        "child_agent_allowed",
+        "depth_allowed",
+        "revocation_clear"
+      ],
+      "properties": {
+        "parent_grant_active": {
+          "type": "boolean"
+        },
+        "capability_subset": {
+          "type": "boolean"
+        },
+        "constraints_not_widened": {
+          "type": "boolean"
+        },
+        "child_agent_allowed": {
+          "type": "boolean"
+        },
+        "depth_allowed": {
+          "type": "boolean"
+        },
+        "revocation_clear": {
+          "type": "boolean"
+        }
+      }
+    },
+    "countersignature_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "allowed",
+        "denied",
+        "human_review_required"
+      ]
+    },
+    "denial_reasons": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "decision": {
+            "enum": [
+              "denied",
+              "human_review_required"
+            ]
+          }
+        },
+        "required": [
+          "decision"
+        ]
+      },
+      "then": {
+        "required": [
+          "denial_reasons"
+        ]
+      }
+    }
+  ]
+}
