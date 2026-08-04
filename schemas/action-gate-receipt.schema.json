@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/zeroshiki/schemas/action-gate-receipt.schema.json",
+  "title": "Action Gate Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "record_type",
+    "receipt_id",
+    "agent_id",
+    "grant_id",
+    "evaluated_at",
+    "valid_until",
+    "requested_action",
+    "checks",
+    "decision"
+  ],
+  "properties": {
+    "schema_version": {"const": "0.1.0"},
+    "record_type": {"const": "action_gate_receipt"},
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^action-gate:[A-Za-z0-9._:-]+$"
+    },
+    "agent_id": {"type": "string", "minLength": 1},
+    "grant_id": {
+      "type": "string",
+      "pattern": "^capability-grant:[A-Za-z0-9._:-]+$"
+    },
+    "evaluated_at": {"type": "string", "format": "date-time"},
+    "valid_until": {"type": "string", "format": "date-time"},
+    "requested_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action_type", "target", "tool", "parameters_digest"],
+      "properties": {
+        "action_type": {"type": "string", "minLength": 1},
+        "target": {"type": "string", "minLength": 1},
+        "tool": {"type": "string", "minLength": 1},
+        "parameters_digest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        }
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "grant_active",
+        "within_scope",
+        "target_allowed",
+        "tool_allowed",
+        "within_time_window",
+        "invocation_budget_available",
+        "irreversible_action",
+        "human_approval_ref"
+      ],
+      "properties": {
+        "grant_active": {"type": "boolean"},
+        "within_scope": {"type": "boolean"},
+        "target_allowed": {"type": "boolean"},
+        "tool_allowed": {"type": "boolean"},
+        "within_time_window": {"type": "boolean"},
+        "invocation_budget_available": {"type": "boolean"},
+        "irreversible_action": {"type": "boolean"},
+        "human_approval_ref": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "decision": {
+      "type": "string",
+      "enum": ["allowed", "denied", "human_review_required"]
+    },
+    "execution_token": {
+      "type": "string",
+      "minLength": 16
+    },
+    "denial_reasons": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"decision": {"const": "allowed"}},
+        "required": ["decision"]
+      },
+      "then": {"required": ["execution_token"]}
+    },
+    {
+      "if": {
+        "properties": {"decision": {"enum": ["denied", "human_review_required"]}},
+        "required": ["decision"]
+      },
+      "then": {"required": ["denial_reasons"]}
+    }
+  ]
+}
