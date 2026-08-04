@@ -1,0 +1,29 @@
+schema_version: 0.2.0
+record_type: capability_revocation_record
+revocation_id: capability-revocation:demo:001
+authority_domain_id: authority-domain:demo:001
+root_grant_id: capability-grant:demo:root-001
+revoked_at: '2026-08-04T01:11:25Z'
+revoker:
+  issuer_type: independent_authority
+  issuer_id: authority:runtime-guard:001
+reason: Runtime anomaly exceeded the approved network pattern.
+scope: cascade
+revoked_grant_ids:
+- capability-grant:demo:root-001
+- capability-grant:demo:child-001
+descendant_grant_ids:
+- capability-grant:demo:child-001
+invalidated_execution_token_ids:
+- execution-token:demo:001
+previous_revocation_epoch: 0
+new_revocation_epoch: 1
+propagation:
+  required: true
+  complete: true
+  acknowledged_agent_ids:
+  - agent:coordinator:001
+  - agent:worker:001
+  evidence_refs:
+  - evidence:revocation-broadcast:demo-001
+  - evidence:revocation-ack:demo-001
