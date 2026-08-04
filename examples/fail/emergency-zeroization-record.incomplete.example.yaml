@@ -1,0 +1,22 @@
+schema_version: "0.1.0"
+record_type: emergency_zeroization_record
+zeroization_id: zeroization:fail:incomplete-001
+agent_id: agent:zeroshiki-demo:001
+trigger: anomaly
+initiated_at: "2026-08-04T01:10:00Z"
+completed_at: "2026-08-04T01:10:02Z"
+revoked_grant_ids:
+  - capability-grant:demo:001
+terminated_child_agent_ids: []
+actions:
+  grants_revoked: true
+  credentials_destroyed: true
+  network_disconnected: false
+  child_agents_terminated: true
+  pending_actions_cancelled: true
+  execution_environment_frozen: true
+evidence_preserved: true
+final_state:
+  authority_state: zero
+  external_action_allowed: false
+  zero_state_record_id: zero-state:demo:startup-001
