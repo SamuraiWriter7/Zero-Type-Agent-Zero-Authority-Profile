@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "$id": "https://example.org/zeroshiki/schemas/execution-continuity-receipt.schema.json",
+  "title": "Execution Continuity Receipt",
+  "required": [
+    "schema_version",
+    "record_type",
+    "continuity_id",
+    "agent_id",
+    "authority_domain_id",
+    "grant_id",
+    "grant_epoch",
+    "receipt_id",
+    "execution_token_id",
+    "checked_at",
+    "observed_revocation_epoch",
+    "checks",
+    "decision"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.2.0"
+    },
+    "record_type": {
+      "const": "execution_continuity_receipt"
+    },
+    "continuity_id": {
+      "type": "string",
+      "pattern": "^execution-continuity:[A-Za-z0-9._:-]+$"
+    },
+    "agent_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authority_domain_id": {
+      "type": "string",
+      "pattern": "^authority-domain:[A-Za-z0-9._:-]+$"
+    },
+    "grant_id": {
+      "type": "string",
+      "pattern": "^capability-grant:[A-Za-z0-9._:-]+$"
+    },
+    "grant_epoch": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^action-gate:[A-Za-z0-9._:-]+$"
+    },
+    "execution_token_id": {
+      "type": "string",
+      "pattern": "^execution-token:[A-Za-z0-9._:-]+$"
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "observed_revocation_epoch": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "grant_active",
+        "grant_epoch_current",
+        "revocation_clear",
+        "execution_token_valid",
+        "execution_token_unrevoked",
+        "within_effective_validity",
+        "budget_remaining",
+        "recorder_healthy"
+      ],
+      "properties": {
+        "grant_active": {
+          "type": "boolean"
+        },
+        "grant_epoch_current": {
+          "type": "boolean"
+        },
+        "revocation_clear": {
+          "type": "boolean"
+        },
+        "execution_token_valid": {
+          "type": "boolean"
+        },
+        "execution_token_unrevoked": {
+          "type": "boolean"
+        },
+        "within_effective_validity": {
+          "type": "boolean"
+        },
+        "budget_remaining": {
+          "type": "boolean"
+        },
+        "recorder_healthy": {
+          "type": "boolean"
+        }
+      }
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "continue",
+        "suspend",
+        "zeroize"
+      ]
+    },
+    "next_check_due_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reasons": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "decision": {
+            "const": "continue"
+          }
+        },
+        "required": [
+          "decision"
+        ]
+      },
+      "then": {
+        "required": [
+          "next_check_due_at"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "decision": {
+            "enum": [
+              "suspend",
+              "zeroize"
+            ]
+          }
+        },
+        "required": [
+          "decision"
+        ]
+      },
+      "then": {
+        "required": [
+          "reasons"
+        ]
+      }
+    }
+  ]
+}
