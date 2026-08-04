@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/zeroshiki/schemas/emergency-zeroization-record.schema.json",
+  "title": "Emergency Zeroization Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "record_type",
+    "zeroization_id",
+    "agent_id",
+    "trigger",
+    "initiated_at",
+    "completed_at",
+    "revoked_grant_ids",
+    "terminated_child_agent_ids",
+    "actions",
+    "evidence_preserved",
+    "final_state"
+  ],
+  "properties": {
+    "schema_version": {"const": "0.1.0"},
+    "record_type": {"const": "emergency_zeroization_record"},
+    "zeroization_id": {
+      "type": "string",
+      "pattern": "^zeroization:[A-Za-z0-9._:-]+$"
+    },
+    "agent_id": {"type": "string", "minLength": 1},
+    "trigger": {
+      "type": "string",
+      "enum": ["revocation", "anomaly", "task_completed", "manual", "emergency"]
+    },
+    "initiated_at": {"type": "string", "format": "date-time"},
+    "completed_at": {"type": "string", "format": "date-time"},
+    "revoked_grant_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^capability-grant:[A-Za-z0-9._:-]+$"
+      }
+    },
+    "terminated_child_agent_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "actions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "grants_revoked",
+        "credentials_destroyed",
+        "network_disconnected",
+        "child_agents_terminated",
+        "pending_actions_cancelled",
+        "execution_environment_frozen"
+      ],
+      "properties": {
+        "grants_revoked": {"const": true},
+        "credentials_destroyed": {"const": true},
+        "network_disconnected": {"const": true},
+        "child_agents_terminated": {"const": true},
+        "pending_actions_cancelled": {"const": true},
+        "execution_environment_frozen": {"const": true}
+      }
+    },
+    "evidence_preserved": {"const": true},
+    "final_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authority_state", "external_action_allowed", "zero_state_record_id"],
+      "properties": {
+        "authority_state": {"const": "zero"},
+        "external_action_allowed": {"const": false},
+        "zero_state_record_id": {
+          "type": "string",
+          "pattern": "^zero-state:[A-Za-z0-9._:-]+$"
+        }
+      }
+    }
+  }
+}
