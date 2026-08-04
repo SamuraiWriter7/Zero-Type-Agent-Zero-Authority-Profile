@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "$id": "https://example.org/zeroshiki/schemas/capability-revocation-record.schema.json",
+  "title": "Capability Revocation Record",
+  "required": [
+    "schema_version",
+    "record_type",
+    "revocation_id",
+    "authority_domain_id",
+    "root_grant_id",
+    "revoked_at",
+    "revoker",
+    "reason",
+    "scope",
+    "revoked_grant_ids",
+    "descendant_grant_ids",
+    "invalidated_execution_token_ids",
+    "previous_revocation_epoch",
+    "new_revocation_epoch",
+    "propagation"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.2.0"
+    },
+    "record_type": {
+      "const": "capability_revocation_record"
+    },
+    "revocation_id": {
+      "type": "string",
+      "pattern": "^capability-revocation:[A-Za-z0-9._:-]+$"
+    },
+    "authority_domain_id": {
+      "type": "string",
+      "pattern": "^authority-domain:[A-Za-z0-9._:-]+$"
+    },
+    "root_grant_id": {
+      "type": "string",
+      "pattern": "^capability-grant:[A-Za-z0-9._:-]+$"
+    },
+    "revoked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "revoker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "issuer_type",
+        "issuer_id"
+      ],
+      "properties": {
+        "issuer_type": {
+          "type": "string",
+          "enum": [
+            "human",
+            "authorized_service",
+            "independent_authority"
+          ]
+        },
+        "issuer_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scope": {
+      "type": "string",
+      "enum": [
+        "grant_only",
+        "cascade"
+      ]
+    },
+    "revoked_grant_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^capability-grant:[A-Za-z0-9._:-]+$"
+      }
+    },
+    "descendant_grant_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^capability-grant:[A-Za-z0-9._:-]+$"
+      }
+    },
+    "invalidated_execution_token_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^execution-token:[A-Za-z0-9._:-]+$"
+      }
+    },
+    "previous_revocation_epoch": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "new_revocation_epoch": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "propagation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required",
+        "complete",
+        "acknowledged_agent_ids",
+        "evidence_refs"
+      ],
+      "properties": {
+        "required": {
+          "const": true
+        },
+        "complete": {
+          "const": true
+        },
+        "acknowledged_agent_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}
