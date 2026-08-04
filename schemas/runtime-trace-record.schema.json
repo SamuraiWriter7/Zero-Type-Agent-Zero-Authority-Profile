@@ -1,51 +1,103 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.org/zeroshiki/schemas/runtime-trace-record.schema.json",
-  "title": "Runtime Trace Record",
   "type": "object",
   "additionalProperties": false,
+  "$id": "https://example.org/zeroshiki/schemas/runtime-trace-record.schema.json",
+  "title": "Runtime Trace Record",
   "required": [
     "schema_version",
     "record_type",
     "trace_id",
     "agent_id",
+    "authority_domain_id",
     "grant_id",
+    "grant_epoch",
     "receipt_id",
+    "execution_token_id",
+    "continuity_receipt_ids",
     "started_at",
     "completed_at",
     "recorder",
     "model_self_reported",
+    "revocation_observed",
     "events",
     "final_status"
   ],
   "properties": {
-    "schema_version": {"const": "0.1.0"},
-    "record_type": {"const": "runtime_trace_record"},
+    "schema_version": {
+      "const": "0.2.0"
+    },
+    "record_type": {
+      "const": "runtime_trace_record"
+    },
     "trace_id": {
       "type": "string",
       "pattern": "^runtime-trace:[A-Za-z0-9._:-]+$"
     },
-    "agent_id": {"type": "string", "minLength": 1},
+    "agent_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authority_domain_id": {
+      "type": "string",
+      "pattern": "^authority-domain:[A-Za-z0-9._:-]+$"
+    },
     "grant_id": {
       "type": "string",
       "pattern": "^capability-grant:[A-Za-z0-9._:-]+$"
+    },
+    "grant_epoch": {
+      "type": "integer",
+      "minimum": 1
     },
     "receipt_id": {
       "type": "string",
       "pattern": "^action-gate:[A-Za-z0-9._:-]+$"
     },
-    "started_at": {"type": "string", "format": "date-time"},
-    "completed_at": {"type": "string", "format": "date-time"},
+    "execution_token_id": {
+      "type": "string",
+      "pattern": "^execution-token:[A-Za-z0-9._:-]+$"
+    },
+    "continuity_receipt_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^execution-continuity:[A-Za-z0-9._:-]+$"
+      }
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
     "recorder": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["recorder_id", "runtime_enforced"],
+      "required": [
+        "recorder_id",
+        "runtime_enforced"
+      ],
       "properties": {
-        "recorder_id": {"type": "string", "minLength": 1},
-        "runtime_enforced": {"const": true}
+        "recorder_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "runtime_enforced": {
+          "const": true
+        }
       }
     },
-    "model_self_reported": {"const": false},
+    "model_self_reported": {
+      "const": false
+    },
+    "revocation_observed": {
+      "type": "boolean"
+    },
     "events": {
       "type": "array",
       "minItems": 1,
@@ -62,8 +114,14 @@
           "evidence_ref"
         ],
         "properties": {
-          "sequence": {"type": "integer", "minimum": 1},
-          "timestamp": {"type": "string", "format": "date-time"},
+          "sequence": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
           "event_type": {
             "type": "string",
             "enum": [
@@ -73,22 +131,43 @@
               "credential_use",
               "child_agent_create",
               "external_output",
-              "process_exec"
+              "process_exec",
+              "continuity_checkpoint",
+              "revocation_observed",
+              "execution_suspended"
             ]
           },
-          "action": {"type": "string", "minLength": 1},
-          "target": {"type": "string", "minLength": 1},
+          "action": {
+            "type": "string",
+            "minLength": 1
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1
+          },
           "outcome": {
             "type": "string",
-            "enum": ["succeeded", "blocked", "failed"]
+            "enum": [
+              "succeeded",
+              "blocked",
+              "failed"
+            ]
           },
-          "evidence_ref": {"type": "string", "minLength": 1}
+          "evidence_ref": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },
     "final_status": {
       "type": "string",
-      "enum": ["completed", "blocked", "failed"]
+      "enum": [
+        "completed",
+        "blocked",
+        "failed",
+        "zeroized"
+      ]
     }
   }
 }
