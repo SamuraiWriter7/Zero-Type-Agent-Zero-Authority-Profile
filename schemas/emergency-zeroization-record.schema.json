@@ -1,37 +1,64 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.org/zeroshiki/schemas/emergency-zeroization-record.schema.json",
-  "title": "Emergency Zeroization Record",
   "type": "object",
   "additionalProperties": false,
+  "$id": "https://example.org/zeroshiki/schemas/emergency-zeroization-record.schema.json",
+  "title": "Emergency Zeroization Record",
   "required": [
     "schema_version",
     "record_type",
     "zeroization_id",
     "agent_id",
+    "authority_domain_id",
     "trigger",
     "initiated_at",
     "completed_at",
     "revoked_grant_ids",
+    "revocation_record_ids",
+    "invalidated_execution_token_ids",
     "terminated_child_agent_ids",
     "actions",
+    "cascade_complete",
     "evidence_preserved",
     "final_state"
   ],
   "properties": {
-    "schema_version": {"const": "0.1.0"},
-    "record_type": {"const": "emergency_zeroization_record"},
+    "schema_version": {
+      "const": "0.2.0"
+    },
+    "record_type": {
+      "const": "emergency_zeroization_record"
+    },
     "zeroization_id": {
       "type": "string",
       "pattern": "^zeroization:[A-Za-z0-9._:-]+$"
     },
-    "agent_id": {"type": "string", "minLength": 1},
+    "agent_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authority_domain_id": {
+      "type": "string",
+      "pattern": "^authority-domain:[A-Za-z0-9._:-]+$"
+    },
     "trigger": {
       "type": "string",
-      "enum": ["revocation", "anomaly", "task_completed", "manual", "emergency"]
+      "enum": [
+        "revocation",
+        "anomaly",
+        "task_completed",
+        "manual",
+        "emergency"
+      ]
     },
-    "initiated_at": {"type": "string", "format": "date-time"},
-    "completed_at": {"type": "string", "format": "date-time"},
+    "initiated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
     "revoked_grant_ids": {
       "type": "array",
       "uniqueItems": true,
@@ -40,16 +67,36 @@
         "pattern": "^capability-grant:[A-Za-z0-9._:-]+$"
       }
     },
+    "revocation_record_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^capability-revocation:[A-Za-z0-9._:-]+$"
+      }
+    },
+    "invalidated_execution_token_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^execution-token:[A-Za-z0-9._:-]+$"
+      }
+    },
     "terminated_child_agent_ids": {
       "type": "array",
       "uniqueItems": true,
-      "items": {"type": "string", "minLength": 1}
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     },
     "actions": {
       "type": "object",
       "additionalProperties": false,
       "required": [
         "grants_revoked",
+        "execution_tokens_invalidated",
         "credentials_destroyed",
         "network_disconnected",
         "child_agents_terminated",
@@ -57,22 +104,63 @@
         "execution_environment_frozen"
       ],
       "properties": {
-        "grants_revoked": {"const": true},
-        "credentials_destroyed": {"const": true},
-        "network_disconnected": {"const": true},
-        "child_agents_terminated": {"const": true},
-        "pending_actions_cancelled": {"const": true},
-        "execution_environment_frozen": {"const": true}
+        "grants_revoked": {
+          "const": true
+        },
+        "execution_tokens_invalidated": {
+          "const": true
+        },
+        "credentials_destroyed": {
+          "const": true
+        },
+        "network_disconnected": {
+          "const": true
+        },
+        "child_agents_terminated": {
+          "const": true
+        },
+        "pending_actions_cancelled": {
+          "const": true
+        },
+        "execution_environment_frozen": {
+          "const": true
+        }
       }
     },
-    "evidence_preserved": {"const": true},
+    "cascade_complete": {
+      "const": true
+    },
+    "evidence_preserved": {
+      "const": true
+    },
     "final_state": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["authority_state", "external_action_allowed", "zero_state_record_id"],
+      "required": [
+        "authority_state",
+        "external_action_allowed",
+        "active_execution_token_ids",
+        "revocation_epoch",
+        "zero_state_record_id"
+      ],
       "properties": {
-        "authority_state": {"const": "zero"},
-        "external_action_allowed": {"const": false},
+        "authority_state": {
+          "const": "zero"
+        },
+        "external_action_allowed": {
+          "const": false
+        },
+        "active_execution_token_ids": {
+          "type": "array",
+          "maxItems": 0,
+          "items": {
+            "type": "string"
+          }
+        },
+        "revocation_epoch": {
+          "type": "integer",
+          "minimum": 0
+        },
         "zero_state_record_id": {
           "type": "string",
           "pattern": "^zero-state:[A-Za-z0-9._:-]+$"
@@ -81,3 +169,4 @@
     }
   }
 }
+
