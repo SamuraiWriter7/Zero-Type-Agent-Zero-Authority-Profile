@@ -1,0 +1,29 @@
+schema_version: "0.1.0"
+record_type: capability_grant
+grant_id: capability-grant:fail:self-expansion-001
+agent_id: agent:zeroshiki-demo:001
+origin_ref: human-origin:demo-task:001
+issuer:
+  issuer_type: human
+  issuer_id: human:operator:001
+purpose: Invalid grant that permits self-expansion.
+capability:
+  action_type: http_get
+  targets:
+    - https://status.example.org/public/health
+  allowed_tools:
+    - tool:http-client:readonly
+constraints:
+  max_invocations: 1
+  network_destinations:
+    - status.example.org
+  data_classes:
+    - public_status_data
+valid_from: "2026-08-04T01:05:00Z"
+expires_at: "2026-08-04T01:20:00Z"
+revocable: true
+ambient_authority: false
+delegation:
+  delegable: false
+  self_expansion_allowed: true
+status: active
