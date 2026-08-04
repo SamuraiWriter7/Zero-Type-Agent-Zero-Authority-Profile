@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "$id": "https://example.org/zeroshiki/schemas/capability-renewal-record.schema.json",
+  "title": "Capability Renewal Record",
+  "required": [
+    "schema_version",
+    "record_type",
+    "renewal_id",
+    "grant_id",
+    "agent_id",
+    "authority_domain_id",
+    "reviewed_at",
+    "issuer",
+    "previous_grant_epoch",
+    "new_grant_epoch",
+    "previous_expires_at",
+    "requested_expires_at",
+    "resulting_expires_at",
+    "automatic",
+    "checks",
+    "decision"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.2.0"
+    },
+    "record_type": {
+      "const": "capability_renewal_record"
+    },
+    "renewal_id": {
+      "type": "string",
+      "pattern": "^capability-renewal:[A-Za-z0-9._:-]+$"
+    },
+    "grant_id": {
+      "type": "string",
+      "pattern": "^capability-grant:[A-Za-z0-9._:-]+$"
+    },
+    "agent_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authority_domain_id": {
+      "type": "string",
+      "pattern": "^authority-domain:[A-Za-z0-9._:-]+$"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "issuer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "issuer_type",
+        "issuer_id"
+      ],
+      "properties": {
+        "issuer_type": {
+          "type": "string",
+          "enum": [
+            "human",
+            "authorized_service",
+            "independent_authority"
+          ]
+        },
+        "issuer_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "previous_grant_epoch": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "new_grant_epoch": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "previous_expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "requested_expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "resulting_expires_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "automatic": {
+      "const": false
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "grant_active",
+        "renewal_allowed",
+        "within_renewal_count",
+        "extension_within_limit",
+        "origin_unchanged",
+        "revocation_clear"
+      ],
+      "properties": {
+        "grant_active": {
+          "type": "boolean"
+        },
+        "renewal_allowed": {
+          "type": "boolean"
+        },
+        "within_renewal_count": {
+          "type": "boolean"
+        },
+        "extension_within_limit": {
+          "type": "boolean"
+        },
+        "origin_unchanged": {
+          "type": "boolean"
+        },
+        "revocation_clear": {
+          "type": "boolean"
+        }
+      }
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "approved",
+        "denied",
+        "human_review_required"
+      ]
+    },
+    "denial_reasons": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "decision": {
+            "const": "approved"
+          }
+        },
+        "required": [
+          "decision"
+        ]
+      },
+      "then": {
+        "properties": {
+          "resulting_expires_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "decision": {
+            "enum": [
+              "denied",
+              "human_review_required"
+            ]
+          }
+        },
+        "required": [
+          "decision"
+        ]
+      },
+      "then": {
+        "required": [
+          "denial_reasons"
+        ],
+        "properties": {
+          "resulting_expires_at": {
+            "const": null
+          }
+        }
+      }
+    }
+  ]
+}
