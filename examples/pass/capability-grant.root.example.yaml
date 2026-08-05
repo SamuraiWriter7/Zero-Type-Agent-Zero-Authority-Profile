@@ -1,4 +1,4 @@
-schema_version: 0.2.0
+schema_version: 0.3.0
 record_type: capability_grant
 grant_id: capability-grant:demo:root-001
 grant_kind: root
@@ -11,6 +11,7 @@ issuer:
   issuer_type: human
   issuer_id: human:operator:001
 purpose: Allow a coordinator to delegate one read-only public status check.
+maximum_risk_tier: moderate
 capability:
   action_type: http_get
   targets:
