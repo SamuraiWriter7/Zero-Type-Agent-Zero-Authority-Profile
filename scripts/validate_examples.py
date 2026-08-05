@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate Zero-Type Agent Zero-Authority Profile v0.2 examples."""
+"""Validate Zero-Type Agent Zero-Authority Profile v0.3 examples."""
 
 from __future__ import annotations
 
@@ -24,6 +24,9 @@ SCHEMA_BY_RECORD_TYPE = {
     "capability_delegation_receipt": SCHEMA_DIR / "capability-delegation-receipt.schema.json",
     "capability_renewal_record": SCHEMA_DIR / "capability-renewal-record.schema.json",
     "capability_revocation_record": SCHEMA_DIR / "capability-revocation-record.schema.json",
+    "risk_classification_assessment": SCHEMA_DIR / "risk-classification-assessment.schema.json",
+    "authorization_quorum_receipt": SCHEMA_DIR / "authorization-quorum-receipt.schema.json",
+    "irreversible_action_commitment": SCHEMA_DIR / "irreversible-action-commitment.schema.json",
     "action_gate_receipt": SCHEMA_DIR / "action-gate-receipt.schema.json",
     "execution_continuity_receipt": SCHEMA_DIR / "execution-continuity-receipt.schema.json",
     "runtime_trace_record": SCHEMA_DIR / "runtime-trace-record.schema.json",
@@ -36,6 +39,9 @@ PRIMARY_ID_FIELD = {
     "capability_delegation_receipt": "delegation_id",
     "capability_renewal_record": "renewal_id",
     "capability_revocation_record": "revocation_id",
+    "risk_classification_assessment": "risk_assessment_id",
+    "authorization_quorum_receipt": "quorum_id",
+    "irreversible_action_commitment": "commitment_id",
     "action_gate_receipt": "receipt_id",
     "execution_continuity_receipt": "continuity_id",
     "runtime_trace_record": "trace_id",
@@ -71,17 +77,24 @@ def parse_datetime(value: Any, field_name: str) -> tuple[datetime | None, list[s
         return None, [f"{field_name}: invalid RFC 3339 date-time"]
 
 
-def build_registry(records: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+def build_registry(records: list[tuple[Path, dict[str, Any]]]) -> tuple[dict[str, dict[str, Any]], list[str]]:
     registry: dict[str, dict[str, Any]] = {}
-    for record in records:
+    sources: dict[str, Path] = {}
+    errors: list[str] = []
+    for path, record in records:
         record_type = record.get("record_type")
         id_field = PRIMARY_ID_FIELD.get(record_type)
         record_id = record.get(id_field) if id_field else None
-        if record_id:
-            if record_id in registry:
-                raise ValueError(f"duplicate primary identifier: {record_id}")
-            registry[record_id] = record
-    return registry
+        if not record_id:
+            continue
+        if record_id in registry:
+            first = sources[record_id].relative_to(ROOT)
+            second = path.relative_to(ROOT)
+            errors.append(f"duplicate primary identifier {record_id}: {first} and {second}")
+            continue
+        registry[record_id] = record
+        sources[record_id] = path
+    return registry, errors
 
 
 def schema_errors(record: dict[str, Any], schemas: dict[str, dict[str, Any]]) -> list[str]:
@@ -128,7 +141,7 @@ def semantic_errors(record: dict[str, Any]) -> list[str]:
         if record.get("decision") == "allowed":
             errors.extend(all_true(checks, (
                 "parent_grant_active", "capability_subset", "constraints_not_widened",
-                "child_agent_allowed", "depth_allowed", "revocation_clear",
+                "child_agent_allowed", "depth_allowed", "revocation_clear", "risk_tier_not_widened",
             ), "checks"))
 
     elif record_type == "capability_renewal_record":
@@ -142,7 +155,7 @@ def semantic_errors(record: dict[str, Any]) -> list[str]:
         if record.get("decision") == "approved":
             errors.extend(all_true(record.get("checks", {}), (
                 "grant_active", "renewal_allowed", "within_renewal_count",
-                "extension_within_limit", "origin_unchanged", "revocation_clear",
+                "extension_within_limit", "origin_unchanged", "revocation_clear", "risk_limit_unchanged",
             ), "checks"))
             if record.get("new_grant_epoch") != record.get("previous_grant_epoch", 0) + 1:
                 errors.append("approved renewal must increment grant epoch by one")
@@ -171,7 +184,8 @@ def semantic_errors(record: dict[str, Any]) -> list[str]:
             errors.extend(all_true(checks, (
                 "grant_active", "grant_epoch_current", "revocation_clear", "delegation_chain_valid",
                 "within_scope", "target_allowed", "tool_allowed", "within_time_window",
-                "invocation_budget_available", "recorder_available",
+                "invocation_budget_available", "recorder_available", "risk_classified",
+                "risk_within_grant", "authorization_quorum_satisfied", "commitment_satisfied",
             ), "checks"))
             if checks.get("irreversible_action") is True and not checks.get("human_approval_ref"):
                 errors.append("irreversible allowed action requires human_approval_ref")
@@ -196,6 +210,7 @@ def semantic_errors(record: dict[str, Any]) -> list[str]:
             errors.extend(all_true(checks, (
                 "grant_active", "grant_epoch_current", "revocation_clear", "execution_token_valid",
                 "execution_token_unrevoked", "within_effective_validity", "budget_remaining", "recorder_healthy",
+                "risk_profile_unchanged", "quorum_still_satisfied", "commitment_still_valid",
             ), "checks"))
             next_due, e2 = parse_datetime(record.get("next_check_due_at"), "next_check_due_at")
             errors.extend(e2)
@@ -674,6 +689,273 @@ def cross_record_errors(record: dict[str, Any], registry: dict[str, dict[str, An
     return errors
 
 
+
+RISK_RANK = {"low": 0, "moderate": 1, "high": 2, "critical": 3}
+
+
+def v03_semantic_errors(record: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    record_type = record.get("record_type")
+
+    if record_type == "risk_classification_assessment":
+        if record.get("decision") == "classified":
+            errors.extend(all_true(record.get("checks", {}), (
+                "grant_scope_known", "target_identified", "effects_bounded",
+                "rollback_evaluated", "conflicts_screened",
+            ), "checks"))
+        if record.get("assessor", {}).get("assessor_id") == record.get("agent_id"):
+            errors.append("agent must not classify its own action risk")
+        tier = record.get("risk_tier")
+        controls = record.get("required_controls", {})
+        roles = set(controls.get("required_roles", []))
+        minimum = controls.get("minimum_approvals", 0)
+        if tier == "high":
+            if minimum < 2:
+                errors.append("high risk requires at least two approvals")
+            if not {"human_origin", "safety_authority"}.issubset(roles):
+                errors.append("high risk requires human_origin and safety_authority roles")
+            if not controls.get("human_approval_required") or not controls.get("independent_safety_approval_required"):
+                errors.append("high risk requires human and independent safety approval")
+        if tier == "critical":
+            if minimum < 3:
+                errors.append("critical risk requires at least three approvals")
+            if not {"human_origin", "safety_authority", "domain_owner"}.issubset(roles):
+                errors.append("critical risk requires human_origin, safety_authority, and domain_owner roles")
+            if not controls.get("human_approval_required") or not controls.get("independent_safety_approval_required"):
+                errors.append("critical risk requires human and independent safety approval")
+            if controls.get("cooling_off_seconds", 0) < 60:
+                errors.append("critical risk requires a cooling-off period of at least 60 seconds")
+            if controls.get("commitment_required") is not True:
+                errors.append("critical risk requires irreversible action commitment")
+        if record.get("impact", {}).get("reversibility") == "irreversible":
+            if tier not in {"high", "critical"}:
+                errors.append("irreversible action must be classified high or critical")
+            if controls.get("commitment_required") is not True:
+                errors.append("irreversible action requires commitment")
+
+    elif record_type == "authorization_quorum_receipt":
+        assembled_at, e1 = parse_datetime(record.get("assembled_at"), "assembled_at")
+        errors.extend(e1)
+        approvals = record.get("approvals", [])
+        approve_entries = [a for a in approvals if a.get("decision") == "approve"]
+        approvers = [a.get("approver_id") for a in approve_entries]
+        roles = {a.get("role") for a in approve_entries}
+        policy = record.get("policy", {})
+        checks = record.get("checks", {})
+        if record.get("decision") == "satisfied":
+            errors.extend(all_true(checks, (
+                "minimum_approvals_met", "required_roles_present", "distinct_approvers",
+                "no_self_approval", "no_conflict_of_interest", "no_veto",
+                "approvals_unexpired", "action_digest_consistent",
+            ), "checks"))
+            if len(set(approvers)) < policy.get("minimum_approvals", 0):
+                errors.append("authorization quorum has too few distinct approvals")
+            if not set(policy.get("required_roles", [])).issubset(roles):
+                errors.append("authorization quorum is missing required approval roles")
+            if record.get("agent_id") in approvers:
+                errors.append("agent self-approval is forbidden")
+            if any(a.get("conflict_of_interest") for a in approvals):
+                errors.append("authorization quorum contains a conflicted approver")
+            if any(a.get("decision") == "veto" for a in approvals):
+                errors.append("authorization quorum cannot be satisfied when a veto exists")
+            if len(approvers) != len(set(approvers)):
+                errors.append("authorization quorum approvers must be distinct")
+            for index, approval in enumerate(approvals):
+                approved_at, e2 = parse_datetime(approval.get("approved_at"), f"approvals[{index}].approved_at")
+                expires_at, e3 = parse_datetime(approval.get("expires_at"), f"approvals[{index}].expires_at")
+                errors.extend(e2 + e3)
+                if approved_at and expires_at and expires_at <= approved_at:
+                    errors.append(f"approvals[{index}].expires_at must be later than approved_at")
+                if assembled_at and expires_at and assembled_at >= expires_at:
+                    errors.append(f"approvals[{index}] is expired at quorum assembly")
+                if approval.get("action_digest") != record.get("action_digest"):
+                    errors.append(f"approvals[{index}].action_digest differs from quorum")
+
+    elif record_type == "irreversible_action_commitment":
+        prepared_at, e1 = parse_datetime(record.get("prepared_at"), "prepared_at")
+        not_before, e2 = parse_datetime(record.get("not_before"), "not_before")
+        expires_at, e3 = parse_datetime(record.get("expires_at"), "expires_at")
+        confirmed_at, e4 = parse_datetime(record.get("final_confirmation", {}).get("confirmed_at"), "final_confirmation.confirmed_at")
+        errors.extend(e1 + e2 + e3 + e4)
+        if prepared_at and not_before and not_before < prepared_at:
+            errors.append("not_before must not precede prepared_at")
+        if not_before and expires_at and expires_at <= not_before:
+            errors.append("commitment expires_at must be later than not_before")
+        if record.get("decision") == "committed":
+            errors.extend(all_true(record.get("checks", {}), (
+                "quorum_satisfied", "cooling_off_elapsed", "action_unchanged",
+                "final_human_confirmation", "rollback_or_compensation_defined", "revocation_clear",
+            ), "checks"))
+            if confirmed_at and not_before and confirmed_at < not_before:
+                errors.append("final confirmation occurred before cooling-off elapsed")
+            if confirmed_at and expires_at and confirmed_at >= expires_at:
+                errors.append("final confirmation occurred after commitment expiry")
+            confirmation = record.get("final_confirmation", {})
+            if confirmation.get("confirmer_id") == record.get("agent_id"):
+                errors.append("agent must not confirm its own irreversible commitment")
+            if confirmation.get("action_digest") != record.get("action_digest"):
+                errors.append("final confirmation action_digest differs from commitment")
+
+    return errors
+
+
+def approval_expiry(quorum: dict[str, Any]) -> datetime | None:
+    expiries: list[datetime] = []
+    for approval in quorum.get("approvals", []):
+        expiry, _ = parse_datetime(approval.get("expires_at"), "approval.expires_at")
+        if expiry:
+            expiries.append(expiry)
+    return min(expiries) if expiries else None
+
+
+def same_action(left: dict[str, Any], right: dict[str, Any]) -> bool:
+    names = ("action_type", "target", "tool", "parameters_digest")
+    return all(left.get(name) == right.get(name) for name in names)
+
+
+def v03_cross_record_errors(record: dict[str, Any], registry: dict[str, dict[str, Any]]) -> list[str]:
+    errors: list[str] = []
+    record_type = record.get("record_type")
+
+    if record_type == "capability_grant" and record.get("grant_kind") == "delegated":
+        parent = registry.get(record.get("parent_grant_id"))
+        delegation = registry.get(record.get("delegation_receipt_id"))
+        if parent and RISK_RANK.get(record.get("maximum_risk_tier"), 99) > RISK_RANK.get(parent.get("maximum_risk_tier"), -1):
+            errors.append("delegated grant widens parent maximum_risk_tier")
+        if delegation and delegation.get("delegated_maximum_risk_tier") != record.get("maximum_risk_tier"):
+            errors.append("delegated grant maximum_risk_tier differs from delegation receipt")
+
+    elif record_type == "capability_delegation_receipt":
+        parent = registry.get(record.get("parent_grant_id"))
+        if parent and RISK_RANK.get(record.get("delegated_maximum_risk_tier"), 99) > RISK_RANK.get(parent.get("maximum_risk_tier"), -1):
+            errors.append("delegated maximum_risk_tier widens parent risk authority")
+
+    elif record_type == "risk_classification_assessment":
+        grant = registry.get(record.get("grant_id"))
+        if grant is None:
+            return [f"grant_id not found: {record.get('grant_id')}"]
+        if grant.get("agent_id") != record.get("agent_id"):
+            errors.append("risk assessment agent_id differs from grant")
+        if grant.get("authority_domain_id") != record.get("authority_domain_id"):
+            errors.append("risk assessment authority_domain_id differs from grant")
+        if RISK_RANK.get(record.get("risk_tier"), 99) > RISK_RANK.get(grant.get("maximum_risk_tier"), -1):
+            errors.append("risk assessment exceeds grant maximum_risk_tier")
+        action = record.get("requested_action", {})
+        capability = grant.get("capability", {})
+        if action.get("action_type") != capability.get("action_type"):
+            errors.append("risk-assessed action_type is outside capability grant")
+        if action.get("target") not in capability.get("targets", []):
+            errors.append("risk-assessed target is outside capability grant")
+        if action.get("tool") not in capability.get("allowed_tools", []):
+            errors.append("risk-assessed tool is outside capability grant")
+
+    elif record_type == "authorization_quorum_receipt":
+        risk = registry.get(record.get("risk_assessment_id"))
+        if risk is None:
+            return [f"risk_assessment_id not found: {record.get('risk_assessment_id')}"]
+        for field in ("authority_domain_id", "agent_id", "grant_id", "action_digest"):
+            if record.get(field) != risk.get(field):
+                errors.append(f"authorization quorum {field} differs from risk assessment")
+        controls = risk.get("required_controls", {})
+        policy = record.get("policy", {})
+        if policy.get("minimum_approvals") != controls.get("minimum_approvals"):
+            errors.append("authorization quorum minimum_approvals differs from risk controls")
+        if set(policy.get("required_roles", [])) != set(controls.get("required_roles", [])):
+            errors.append("authorization quorum required_roles differ from risk controls")
+        if risk.get("decision") != "classified" and record.get("decision") == "satisfied":
+            errors.append("quorum cannot be satisfied for an unclassified risk")
+        assessed_at, _ = parse_datetime(risk.get("assessed_at"), "risk.assessed_at")
+        assembled_at, _ = parse_datetime(record.get("assembled_at"), "assembled_at")
+        if assessed_at and assembled_at and assembled_at < assessed_at:
+            errors.append("authorization quorum assembled before risk assessment")
+
+    elif record_type == "irreversible_action_commitment":
+        risk = registry.get(record.get("risk_assessment_id"))
+        quorum = registry.get(record.get("quorum_id"))
+        if risk is None:
+            errors.append(f"risk_assessment_id not found: {record.get('risk_assessment_id')}")
+        if quorum is None:
+            errors.append(f"quorum_id not found: {record.get('quorum_id')}")
+        if not risk or not quorum:
+            return errors
+        for field in ("authority_domain_id", "agent_id", "grant_id", "action_digest"):
+            if record.get(field) != risk.get(field):
+                errors.append(f"commitment {field} differs from risk assessment")
+            if record.get(field) != quorum.get(field):
+                errors.append(f"commitment {field} differs from authorization quorum")
+        if quorum.get("decision") != "satisfied":
+            errors.append("commitment requires a satisfied authorization quorum")
+        if risk.get("required_controls", {}).get("commitment_required") is not True:
+            errors.append("commitment supplied for risk profile that does not require commitment")
+        prepared_at, _ = parse_datetime(record.get("prepared_at"), "prepared_at")
+        not_before, _ = parse_datetime(record.get("not_before"), "not_before")
+        cooling = risk.get("required_controls", {}).get("cooling_off_seconds", 0)
+        if prepared_at and not_before and not_before < prepared_at + timedelta(seconds=cooling):
+            errors.append("commitment not_before does not satisfy required cooling-off period")
+
+    elif record_type == "action_gate_receipt":
+        risk = registry.get(record.get("risk_assessment_id"))
+        quorum = registry.get(record.get("authorization_quorum_id"))
+        commitment_id = record.get("commitment_id")
+        commitment = registry.get(commitment_id) if commitment_id else None
+        if risk is None:
+            errors.append(f"risk_assessment_id not found: {record.get('risk_assessment_id')}")
+        if quorum is None:
+            errors.append(f"authorization_quorum_id not found: {record.get('authorization_quorum_id')}")
+        if not risk or not quorum:
+            return errors
+        for other, label in ((risk, "risk assessment"), (quorum, "authorization quorum")):
+            for field in ("authority_domain_id", "agent_id", "grant_id", "action_digest"):
+                if record.get(field) != other.get(field):
+                    errors.append(f"action gate {field} differs from {label}")
+        if not same_action(record.get("requested_action", {}), risk.get("requested_action", {})):
+            errors.append("action gate requested_action differs from risk assessment")
+        if risk.get("decision") != "classified":
+            errors.append("action gate requires classified risk")
+        if quorum.get("decision") != "satisfied":
+            errors.append("action gate requires satisfied authorization quorum")
+        evaluated_at, _ = parse_datetime(record.get("evaluated_at"), "evaluated_at")
+        q_expiry = approval_expiry(quorum)
+        if evaluated_at and q_expiry and evaluated_at >= q_expiry:
+            errors.append("authorization quorum expired before action gate evaluation")
+        commitment_required = risk.get("required_controls", {}).get("commitment_required") is True
+        if commitment_required and commitment is None:
+            errors.append("risk profile requires an irreversible action commitment")
+        if not commitment_required and commitment_id is not None:
+            errors.append("action gate must not attach commitment when risk profile does not require it")
+        if commitment:
+            if commitment.get("decision") != "committed":
+                errors.append("action gate commitment is not committed")
+            for field in ("authority_domain_id", "agent_id", "grant_id", "action_digest"):
+                if record.get(field) != commitment.get(field):
+                    errors.append(f"action gate {field} differs from commitment")
+            expires_at, _ = parse_datetime(commitment.get("expires_at"), "commitment.expires_at")
+            if evaluated_at and expires_at and evaluated_at >= expires_at:
+                errors.append("irreversible action commitment expired before action gate evaluation")
+        if record.get("decision") == "allowed" and risk.get("impact", {}).get("reversibility") == "irreversible" and not record.get("checks", {}).get("irreversible_action"):
+            errors.append("irreversible risk must set checks.irreversible_action=true")
+
+    elif record_type == "execution_continuity_receipt":
+        gate = registry.get(record.get("receipt_id"))
+        if gate:
+            for field in ("risk_assessment_id", "authorization_quorum_id", "commitment_id"):
+                if record.get(field) != gate.get(field):
+                    errors.append(f"continuity {field} differs from action gate")
+            checked_at, _ = parse_datetime(record.get("checked_at"), "checked_at")
+            quorum = registry.get(record.get("authorization_quorum_id"))
+            if quorum and checked_at:
+                q_expiry = approval_expiry(quorum)
+                if q_expiry and checked_at >= q_expiry and record.get("decision") == "continue":
+                    errors.append("continuity must not continue after authorization quorum expiry")
+            commitment_id = record.get("commitment_id")
+            commitment = registry.get(commitment_id) if commitment_id else None
+            if commitment and checked_at:
+                expiry, _ = parse_datetime(commitment.get("expires_at"), "commitment.expires_at")
+                if expiry and checked_at >= expiry and record.get("decision") == "continue":
+                    errors.append("continuity must not continue after commitment expiry")
+
+    return errors
+
 def validate_record(path: Path, schemas: dict[str, dict[str, Any]], registry: dict[str, dict[str, Any]]) -> list[str]:
     try:
         record = load_yaml(path)
@@ -683,22 +965,53 @@ def validate_record(path: Path, schemas: dict[str, dict[str, Any]], registry: di
     if errors:
         return errors
     errors.extend(semantic_errors(record))
+    errors.extend(v03_semantic_errors(record))
     errors.extend(cross_record_errors(record, registry))
+    errors.extend(v03_cross_record_errors(record, registry))
     return errors
 
 
 def main() -> int:
-    print("=== Zero-Type Agent Zero-Authority Profile v0.2 Validation ===")
-    schemas = {record_type: load_json(path) for record_type, path in SCHEMA_BY_RECORD_TYPE.items()}
+    print("=== Zero-Type Agent Zero-Authority Profile v0.3 Validation ===")
+    try:
+        schemas = {record_type: load_json(path) for record_type, path in SCHEMA_BY_RECORD_TYPE.items()}
+    except Exception as exc:  # noqa: BLE001
+        print(f"[fatal] failed to load schema: {exc}")
+        return 1
     for record_type, path in SCHEMA_BY_RECORD_TYPE.items():
         print(f"schema [{record_type}]: {path.relative_to(ROOT)}")
 
     pass_paths = sorted(PASS_DIR.glob("*.yaml"))
     fail_paths = sorted(FAIL_DIR.glob("*.yaml"))
-    pass_records = [load_yaml(path) for path in pass_paths]
-    registry = build_registry(pass_records)
-    failed = False
+    loaded_pass: list[tuple[Path, dict[str, Any]]] = []
+    preflight_failed = False
+    for path in pass_paths:
+        try:
+            record = load_yaml(path)
+        except Exception as exc:  # noqa: BLE001
+            print(f"[fatal] {path.relative_to(ROOT)}: load error: {exc}")
+            preflight_failed = True
+            continue
+        errors = schema_errors(record, schemas)
+        if errors:
+            print(f"[fatal] {path.relative_to(ROOT)} is not schema-valid for registry construction")
+            for error in errors:
+                print(f"  - {error}")
+            preflight_failed = True
+            continue
+        loaded_pass.append((path, record))
+    if preflight_failed:
+        print("Validation failed.")
+        return 1
 
+    registry, registry_errors = build_registry(loaded_pass)
+    if registry_errors:
+        for error in registry_errors:
+            print(f"[fatal] {error}")
+        print("Validation failed.")
+        return 1
+
+    failed = False
     for path in pass_paths:
         print(f"\n[validate-pass] {path.relative_to(ROOT)}")
         errors = validate_record(path, schemas, registry)
