@@ -15,6 +15,7 @@
     "proposed_child_grant_id",
     "delegation_depth",
     "evaluated_at",
+    "delegated_maximum_risk_tier",
     "delegated_capability",
     "delegated_constraints",
     "checks",
@@ -23,7 +24,7 @@
   ],
   "properties": {
     "schema_version": {
-      "const": "0.2.0"
+      "const": "0.3.0"
     },
     "record_type": {
       "const": "capability_delegation_receipt"
@@ -60,6 +61,15 @@
     "evaluated_at": {
       "type": "string",
       "format": "date-time"
+    },
+    "delegated_maximum_risk_tier": {
+      "type": "string",
+      "enum": [
+        "low",
+        "moderate",
+        "high",
+        "critical"
+      ]
     },
     "delegated_capability": {
       "type": "object",
@@ -134,7 +144,8 @@
         "constraints_not_widened",
         "child_agent_allowed",
         "depth_allowed",
-        "revocation_clear"
+        "revocation_clear",
+        "risk_tier_not_widened"
       ],
       "properties": {
         "parent_grant_active": {
@@ -153,6 +164,9 @@
           "type": "boolean"
         },
         "revocation_clear": {
+          "type": "boolean"
+        },
+        "risk_tier_not_widened": {
           "type": "boolean"
         }
       }
