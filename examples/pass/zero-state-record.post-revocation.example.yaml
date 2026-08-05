@@ -1,4 +1,4 @@
-schema_version: 0.2.0
+schema_version: 0.3.0
 record_type: zero_state_record
 zero_state_id: zero-state:demo:post-revocation-001
 agent_id: agent:worker:001
