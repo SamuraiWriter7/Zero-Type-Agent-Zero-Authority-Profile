@@ -24,7 +24,7 @@
   ],
   "properties": {
     "schema_version": {
-      "const": "0.2.0"
+      "const": "0.3.0"
     },
     "record_type": {
       "const": "capability_renewal_record"
@@ -106,7 +106,8 @@
         "within_renewal_count",
         "extension_within_limit",
         "origin_unchanged",
-        "revocation_clear"
+        "revocation_clear",
+        "risk_limit_unchanged"
       ],
       "properties": {
         "grant_active": {
@@ -125,6 +126,9 @@
           "type": "boolean"
         },
         "revocation_clear": {
+          "type": "boolean"
+        },
+        "risk_limit_unchanged": {
           "type": "boolean"
         }
       }
@@ -195,3 +199,4 @@
     }
   ]
 }
+
