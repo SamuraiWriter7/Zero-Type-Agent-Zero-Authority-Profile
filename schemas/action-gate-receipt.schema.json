@@ -15,6 +15,10 @@
     "observed_revocation_epoch",
     "evaluated_at",
     "valid_until",
+    "action_digest",
+    "risk_assessment_id",
+    "authorization_quorum_id",
+    "commitment_id",
     "requested_action",
     "checks",
     "continuity",
@@ -22,7 +26,7 @@
   ],
   "properties": {
     "schema_version": {
-      "const": "0.2.0"
+      "const": "0.3.0"
     },
     "record_type": {
       "const": "action_gate_receipt"
@@ -58,6 +62,25 @@
     "valid_until": {
       "type": "string",
       "format": "date-time"
+    },
+    "action_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "risk_assessment_id": {
+      "type": "string",
+      "pattern": "^risk-assessment:[A-Za-z0-9._:-]+$"
+    },
+    "authorization_quorum_id": {
+      "type": "string",
+      "pattern": "^authorization-quorum:[A-Za-z0-9._:-]+$"
+    },
+    "commitment_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^action-commitment:[A-Za-z0-9._:-]+$"
     },
     "requested_action": {
       "type": "object",
@@ -102,7 +125,11 @@
         "invocation_budget_available",
         "recorder_available",
         "irreversible_action",
-        "human_approval_ref"
+        "human_approval_ref",
+        "risk_classified",
+        "risk_within_grant",
+        "authorization_quorum_satisfied",
+        "commitment_satisfied"
       ],
       "properties": {
         "grant_active": {
@@ -143,6 +170,18 @@
             "string",
             "null"
           ]
+        },
+        "risk_classified": {
+          "type": "boolean"
+        },
+        "risk_within_grant": {
+          "type": "boolean"
+        },
+        "authorization_quorum_satisfied": {
+          "type": "boolean"
+        },
+        "commitment_satisfied": {
+          "type": "boolean"
         }
       }
     },
