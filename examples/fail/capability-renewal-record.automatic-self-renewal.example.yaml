@@ -1,4 +1,4 @@
-schema_version: 0.2.0
+schema_version: 0.3.0
 record_type: capability_renewal_record
 renewal_id: capability-renewal:fail:automatic-001
 grant_id: capability-grant:demo:child-001
@@ -21,4 +21,5 @@ checks:
   extension_within_limit: true
   origin_unchanged: true
   revocation_clear: true
+  risk_limit_unchanged: true
 decision: approved
