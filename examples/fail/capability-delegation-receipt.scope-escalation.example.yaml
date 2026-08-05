@@ -1,4 +1,4 @@
-schema_version: 0.2.0
+schema_version: 0.3.0
 record_type: capability_delegation_receipt
 delegation_id: capability-delegation:fail:scope-escalation-001
 authority_domain_id: authority-domain:demo:001
@@ -8,6 +8,7 @@ child_agent_id: agent:worker:001
 proposed_child_grant_id: capability-grant:fail:child-escalated-001
 delegation_depth: 1
 evaluated_at: '2026-08-04T01:02:00Z'
+delegated_maximum_risk_tier: critical
 delegated_capability:
   action_type: http_get
   targets:
@@ -27,5 +28,6 @@ checks:
   child_agent_allowed: true
   depth_allowed: true
   revocation_clear: true
+  risk_tier_not_widened: false
 countersignature_ref: approval:independent-authority:demo-001
 decision: allowed
