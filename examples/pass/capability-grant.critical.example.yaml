@@ -1,0 +1,47 @@
+schema_version: 0.3.0
+record_type: capability_grant
+grant_id: capability-grant:demo:critical-001
+grant_kind: root
+agent_id: agent:publisher:001
+authority_domain_id: authority-domain:demo:critical-001
+issued_revocation_epoch: 0
+grant_epoch: 1
+origin_ref: human-origin:release:001
+issuer:
+  issuer_type: human
+  issuer_id: human:release-owner:001
+purpose: Publish one externally visible release after multi-party approval.
+maximum_risk_tier: critical
+capability:
+  action_type: publish_release
+  targets:
+  - release:public:demo-001
+  allowed_tools:
+  - tool:publisher:controlled
+constraints:
+  max_invocations: 1
+  network_destinations:
+  - publisher.example.org
+  data_classes:
+  - approved_release_material
+valid_from: '2026-08-04T01:50:00Z'
+expires_at: '2026-08-04T02:30:00Z'
+revocable: true
+ambient_authority: false
+parent_grant_id: null
+delegation_receipt_id: null
+delegation:
+  delegable: false
+  max_depth: 0
+  allowed_child_agents: []
+  requires_independent_countersignature: true
+  self_expansion_allowed: false
+renewal_policy:
+  renewable: false
+  max_renewals: 0
+  max_extension_seconds: 0
+  automatic_renewal: false
+revocation_channel:
+  channel_id: revocation-channel:demo:critical-001
+  propagation_required: true
+status: active
