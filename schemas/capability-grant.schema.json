@@ -16,6 +16,7 @@
     "origin_ref",
     "issuer",
     "purpose",
+    "maximum_risk_tier",
     "capability",
     "constraints",
     "valid_from",
@@ -31,7 +32,7 @@
   ],
   "properties": {
     "schema_version": {
-      "const": "0.2.0"
+      "const": "0.3.0"
     },
     "record_type": {
       "const": "capability_grant"
@@ -92,6 +93,15 @@
     "purpose": {
       "type": "string",
       "minLength": 1
+    },
+    "maximum_risk_tier": {
+      "type": "string",
+      "enum": [
+        "low",
+        "moderate",
+        "high",
+        "critical"
+      ]
     },
     "capability": {
       "type": "object",
