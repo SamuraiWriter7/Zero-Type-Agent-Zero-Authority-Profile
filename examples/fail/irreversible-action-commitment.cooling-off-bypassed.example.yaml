@@ -1,0 +1,28 @@
+schema_version: 0.3.0
+record_type: irreversible_action_commitment
+commitment_id: action-commitment:fail:cooling-off-001
+risk_assessment_id: risk-assessment:demo:critical-001
+quorum_id: authorization-quorum:demo:critical-001
+authority_domain_id: authority-domain:demo:critical-001
+agent_id: agent:publisher:001
+grant_id: capability-grant:demo:critical-001
+action_digest: sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+prepared_at: '2026-08-04T01:56:30Z'
+not_before: '2026-08-04T01:58:30Z'
+expires_at: '2026-08-04T02:05:00Z'
+idempotency_key: release-demo-001-v1
+rollback_or_compensation_ref: compensation-plan:release-retraction:001
+final_confirmation:
+  confirmation_id: confirmation:fail:cooling-off-001
+  confirmer_id: human:release-owner:001
+  role: human_origin
+  confirmed_at: '2026-08-04T01:57:00Z'
+  action_digest: sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+checks:
+  quorum_satisfied: true
+  cooling_off_elapsed: true
+  action_unchanged: true
+  final_human_confirmation: true
+  rollback_or_compensation_defined: true
+  revocation_clear: true
+decision: committed
