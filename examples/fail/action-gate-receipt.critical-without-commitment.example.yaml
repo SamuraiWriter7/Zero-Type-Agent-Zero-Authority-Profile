@@ -1,0 +1,45 @@
+schema_version: 0.3.0
+record_type: action_gate_receipt
+receipt_id: action-gate:fail:critical-no-commitment-001
+agent_id: agent:publisher:001
+authority_domain_id: authority-domain:demo:critical-001
+grant_id: capability-grant:demo:critical-001
+grant_epoch: 1
+observed_revocation_epoch: 0
+evaluated_at: '2026-08-04T02:00:00Z'
+valid_until: '2026-08-04T02:01:00Z'
+action_digest: sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+risk_assessment_id: risk-assessment:demo:critical-001
+authorization_quorum_id: authorization-quorum:demo:critical-001
+commitment_id: null
+requested_action:
+  action_type: publish_release
+  target: release:public:demo-001
+  tool: tool:publisher:controlled
+  parameters_digest: sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+checks:
+  grant_active: true
+  grant_epoch_current: true
+  revocation_clear: true
+  delegation_chain_valid: true
+  within_scope: true
+  target_allowed: true
+  tool_allowed: true
+  within_time_window: true
+  invocation_budget_available: true
+  recorder_available: true
+  irreversible_action: true
+  human_approval_ref: approval:demo:critical-human-001
+  risk_classified: true
+  risk_within_grant: true
+  authorization_quorum_satisfied: true
+  commitment_satisfied: true
+continuity:
+  required: true
+  interval_seconds: 15
+  max_unchecked_seconds: 30
+decision: allowed
+execution_token:
+  token_id: execution-token:fail:critical-no-commitment-001
+  issued_at: '2026-08-04T02:00:00Z'
+  expires_at: '2026-08-04T02:01:00Z'
