@@ -1,0 +1,39 @@
+schema_version: 0.3.0
+record_type: risk_classification_assessment
+risk_assessment_id: risk-assessment:demo:critical-001
+authority_domain_id: authority-domain:demo:critical-001
+agent_id: agent:publisher:001
+grant_id: capability-grant:demo:critical-001
+action_digest: sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+assessed_at: '2026-08-04T01:55:00Z'
+assessor:
+  assessor_type: independent_authority
+  assessor_id: authority:risk-engine:001
+requested_action:
+  action_type: publish_release
+  target: release:public:demo-001
+  tool: tool:publisher:controlled
+  parameters_digest: sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+risk_tier: critical
+impact:
+  reversibility: irreversible
+  blast_radius: public_or_financial
+  data_sensitivity: internal
+  external_side_effects: true
+required_controls:
+  minimum_approvals: 3
+  required_roles:
+  - human_origin
+  - safety_authority
+  - domain_owner
+  human_approval_required: true
+  independent_safety_approval_required: true
+  cooling_off_seconds: 120
+  commitment_required: true
+checks:
+  grant_scope_known: true
+  target_identified: true
+  effects_bounded: true
+  rollback_evaluated: true
+  conflicts_screened: true
+decision: classified
