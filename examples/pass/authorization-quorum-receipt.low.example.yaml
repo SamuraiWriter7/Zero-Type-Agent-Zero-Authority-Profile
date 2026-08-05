@@ -1,0 +1,34 @@
+schema_version: 0.3.0
+record_type: authorization_quorum_receipt
+quorum_id: authorization-quorum:demo:low-001
+risk_assessment_id: risk-assessment:demo:low-001
+authority_domain_id: authority-domain:demo:001
+agent_id: agent:worker:001
+grant_id: capability-grant:demo:child-001
+action_digest: sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+assembled_at: '2026-08-04T01:10:40Z'
+policy:
+  minimum_approvals: 1
+  required_roles:
+  - domain_owner
+  distinct_approvers_required: true
+  agent_self_approval_allowed: false
+approvals:
+- approval_id: approval:demo:low-domain-owner-001
+  approver_id: authority:status-owner:001
+  role: domain_owner
+  decision: approve
+  approved_at: '2026-08-04T01:10:35Z'
+  expires_at: '2026-08-04T01:15:00Z'
+  action_digest: sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  conflict_of_interest: false
+checks:
+  minimum_approvals_met: true
+  required_roles_present: true
+  distinct_approvers: true
+  no_self_approval: true
+  no_conflict_of_interest: true
+  no_veto: true
+  approvals_unexpired: true
+  action_digest_consistent: true
+decision: satisfied
