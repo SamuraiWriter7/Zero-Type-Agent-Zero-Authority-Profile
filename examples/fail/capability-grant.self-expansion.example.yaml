@@ -1,4 +1,4 @@
-schema_version: 0.2.0
+schema_version: 0.3.0
 record_type: capability_grant
 grant_id: capability-grant:fail:self-expansion-001
 grant_kind: delegated
@@ -11,6 +11,7 @@ issuer:
   issuer_type: independent_authority
   issuer_id: authority:delegation-gate:001
 purpose: Fetch one public health status document for the approved task.
+maximum_risk_tier: low
 capability:
   action_type: http_get
   targets:
