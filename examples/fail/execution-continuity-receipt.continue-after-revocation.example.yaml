@@ -1,4 +1,4 @@
-schema_version: 0.2.0
+schema_version: 0.3.0
 record_type: execution_continuity_receipt
 continuity_id: execution-continuity:fail:continue-after-revocation-001
 agent_id: agent:worker:001
@@ -7,6 +7,9 @@ grant_id: capability-grant:demo:child-001
 grant_epoch: 2
 receipt_id: action-gate:demo:001
 execution_token_id: execution-token:demo:001
+risk_assessment_id: risk-assessment:demo:low-001
+authorization_quorum_id: authorization-quorum:demo:low-001
+commitment_id: null
 checked_at: '2026-08-04T01:11:26Z'
 observed_revocation_epoch: 0
 checks:
@@ -18,5 +21,8 @@ checks:
   within_effective_validity: true
   budget_remaining: true
   recorder_healthy: true
+  risk_profile_unchanged: true
+  quorum_still_satisfied: true
+  commitment_still_valid: true
 decision: continue
 next_check_due_at: '2026-08-04T01:11:46Z'
