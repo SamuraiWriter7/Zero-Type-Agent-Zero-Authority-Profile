@@ -1,0 +1,265 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/zeroshiki/schemas/risk-classification-assessment.schema.json",
+  "title": "Risk Classification Assessment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "record_type",
+    "risk_assessment_id",
+    "authority_domain_id",
+    "agent_id",
+    "grant_id",
+    "action_digest",
+    "assessed_at",
+    "assessor",
+    "requested_action",
+    "risk_tier",
+    "impact",
+    "required_controls",
+    "checks",
+    "decision"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.3.0"
+    },
+    "record_type": {
+      "const": "risk_classification_assessment"
+    },
+    "risk_assessment_id": {
+      "type": "string",
+      "pattern": "^risk-assessment:[A-Za-z0-9._:-]+$"
+    },
+    "authority_domain_id": {
+      "type": "string",
+      "pattern": "^authority-domain:[A-Za-z0-9._:-]+$"
+    },
+    "agent_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "grant_id": {
+      "type": "string",
+      "pattern": "^capability-grant:[A-Za-z0-9._:-]+$"
+    },
+    "action_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "assessed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "assessor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assessor_type",
+        "assessor_id"
+      ],
+      "properties": {
+        "assessor_type": {
+          "type": "string",
+          "enum": [
+            "human",
+            "authorized_service",
+            "independent_authority"
+          ]
+        },
+        "assessor_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "requested_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_type",
+        "target",
+        "tool",
+        "parameters_digest"
+      ],
+      "properties": {
+        "action_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tool": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parameters_digest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        }
+      }
+    },
+    "risk_tier": {
+      "type": "string",
+      "enum": [
+        "low",
+        "moderate",
+        "high",
+        "critical"
+      ]
+    },
+    "impact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reversibility",
+        "blast_radius",
+        "data_sensitivity",
+        "external_side_effects"
+      ],
+      "properties": {
+        "reversibility": {
+          "type": "string",
+          "enum": [
+            "reversible",
+            "partially_reversible",
+            "irreversible"
+          ]
+        },
+        "blast_radius": {
+          "type": "string",
+          "enum": [
+            "single_resource",
+            "single_system",
+            "multi_system",
+            "public_or_financial"
+          ]
+        },
+        "data_sensitivity": {
+          "type": "string",
+          "enum": [
+            "public",
+            "internal",
+            "confidential",
+            "restricted"
+          ]
+        },
+        "external_side_effects": {
+          "type": "boolean"
+        }
+      }
+    },
+    "required_controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minimum_approvals",
+        "required_roles",
+        "human_approval_required",
+        "independent_safety_approval_required",
+        "cooling_off_seconds",
+        "commitment_required"
+      ],
+      "properties": {
+        "minimum_approvals": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "required_roles": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "human_origin",
+              "safety_authority",
+              "domain_owner",
+              "auditor"
+            ]
+          }
+        },
+        "human_approval_required": {
+          "type": "boolean"
+        },
+        "independent_safety_approval_required": {
+          "type": "boolean"
+        },
+        "cooling_off_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 86400
+        },
+        "commitment_required": {
+          "type": "boolean"
+        }
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "grant_scope_known",
+        "target_identified",
+        "effects_bounded",
+        "rollback_evaluated",
+        "conflicts_screened"
+      ],
+      "properties": {
+        "grant_scope_known": {
+          "type": "boolean"
+        },
+        "target_identified": {
+          "type": "boolean"
+        },
+        "effects_bounded": {
+          "type": "boolean"
+        },
+        "rollback_evaluated": {
+          "type": "boolean"
+        },
+        "conflicts_screened": {
+          "type": "boolean"
+        }
+      }
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "classified",
+        "blocked"
+      ]
+    },
+    "blocking_reasons": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "decision": {
+            "const": "blocked"
+          }
+        },
+        "required": [
+          "decision"
+        ]
+      },
+      "then": {
+        "required": [
+          "blocking_reasons"
+        ]
+      }
+    }
+  ]
+}
