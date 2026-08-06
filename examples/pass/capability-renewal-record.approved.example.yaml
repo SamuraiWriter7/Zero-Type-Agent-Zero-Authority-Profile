@@ -1,4 +1,4 @@
-schema_version: 0.3.0
+schema_version: 0.4.0
 record_type: capability_renewal_record
 renewal_id: capability-renewal:demo:001
 grant_id: capability-grant:demo:child-001
