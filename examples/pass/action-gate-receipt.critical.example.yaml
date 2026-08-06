@@ -1,4 +1,4 @@
-schema_version: 0.3.0
+schema_version: 0.4.0
 record_type: action_gate_receipt
 receipt_id: action-gate:demo:critical-001
 agent_id: agent:publisher:001
@@ -34,6 +34,15 @@ checks:
   risk_within_grant: true
   authorization_quorum_satisfied: true
   commitment_satisfied: true
+  execution_context_valid: true
+  context_bound_to_agent: true
+  authority_domain_bound: true
+  tool_identity_valid: true
+  tool_digest_current: true
+  tool_allowed_in_context: true
+  runtime_interlock_armed: true
+  interlock_fail_closed: true
+  data_boundary_satisfied: true
 continuity:
   required: true
   interval_seconds: 15
@@ -43,3 +52,7 @@ execution_token:
   token_id: execution-token:demo:critical-001
   issued_at: '2026-08-04T02:00:00Z'
   expires_at: '2026-08-04T02:01:00Z'
+execution_context_id: execution-context:demo:critical-001
+tool_attestation_id: tool-attestation:demo:critical-001
+runtime_interlock_id: runtime-interlock:demo:critical-001
+data_egress_authorization_id: data-egress:demo:critical-001
