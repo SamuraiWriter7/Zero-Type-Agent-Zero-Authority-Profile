@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate Zero-Type Agent Zero-Authority Profile v0.3 examples."""
+"""Validate Zero-Type Agent Zero-Authority Profile v0.4 examples."""
 
 from __future__ import annotations
 
@@ -27,6 +27,10 @@ SCHEMA_BY_RECORD_TYPE = {
     "risk_classification_assessment": SCHEMA_DIR / "risk-classification-assessment.schema.json",
     "authorization_quorum_receipt": SCHEMA_DIR / "authorization-quorum-receipt.schema.json",
     "irreversible_action_commitment": SCHEMA_DIR / "irreversible-action-commitment.schema.json",
+    "execution_context_attestation": SCHEMA_DIR / "execution-context-attestation.schema.json",
+    "tool_identity_attestation": SCHEMA_DIR / "tool-identity-attestation.schema.json",
+    "data_egress_authorization": SCHEMA_DIR / "data-egress-authorization.schema.json",
+    "runtime_interlock_record": SCHEMA_DIR / "runtime-interlock-record.schema.json",
     "action_gate_receipt": SCHEMA_DIR / "action-gate-receipt.schema.json",
     "execution_continuity_receipt": SCHEMA_DIR / "execution-continuity-receipt.schema.json",
     "runtime_trace_record": SCHEMA_DIR / "runtime-trace-record.schema.json",
@@ -42,6 +46,10 @@ PRIMARY_ID_FIELD = {
     "risk_classification_assessment": "risk_assessment_id",
     "authorization_quorum_receipt": "quorum_id",
     "irreversible_action_commitment": "commitment_id",
+    "execution_context_attestation": "context_id",
+    "tool_identity_attestation": "tool_attestation_id",
+    "data_egress_authorization": "egress_id",
+    "runtime_interlock_record": "interlock_id",
     "action_gate_receipt": "receipt_id",
     "execution_continuity_receipt": "continuity_id",
     "runtime_trace_record": "trace_id",
@@ -956,6 +964,310 @@ def v03_cross_record_errors(record: dict[str, Any], registry: dict[str, dict[str
 
     return errors
 
+
+
+EGRESS_SIDE_EFFECTS = {"network_write", "public_output"}
+
+
+def v04_semantic_errors(record: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    record_type = record.get("record_type")
+
+    if record_type == "execution_context_attestation":
+        attested_at, e1 = parse_datetime(record.get("attested_at"), "attested_at")
+        valid_until, e2 = parse_datetime(record.get("valid_until"), "valid_until")
+        errors.extend(e1 + e2)
+        if attested_at and valid_until and valid_until <= attested_at:
+            errors.append("execution context valid_until must be later than attested_at")
+        if record.get("attestor", {}).get("attestor_id") == record.get("agent_id"):
+            errors.append("agent must not attest its own execution context")
+        if record.get("status") == "trusted":
+            errors.extend(all_true(record.get("checks", {}), (
+                "runtime_identity_verified", "image_digest_verified", "code_digest_verified",
+                "isolation_enforced", "network_policy_loaded", "credential_broker_bound",
+                "recorder_bound", "policy_engine_bound", "revocation_epoch_current",
+            ), "checks"))
+
+    elif record_type == "tool_identity_attestation":
+        attested_at, e1 = parse_datetime(record.get("attested_at"), "attested_at")
+        valid_until, e2 = parse_datetime(record.get("valid_until"), "valid_until")
+        errors.extend(e1 + e2)
+        if attested_at and valid_until and valid_until <= attested_at:
+            errors.append("tool attestation valid_until must be later than attested_at")
+        if record.get("attestor", {}).get("attestor_id") == record.get("tool_id"):
+            errors.append("tool must not attest itself")
+        if record.get("status") == "trusted":
+            errors.extend(all_true(record.get("checks", {}), (
+                "identity_verified", "binary_digest_verified", "manifest_verified",
+                "supply_chain_verified", "permissions_minimized", "no_ambient_credentials",
+            ), "checks"))
+        manifest = record.get("manifest", {})
+        if manifest.get("credential_access") == "brokered" and record.get("checks", {}).get("no_ambient_credentials") is not True:
+            errors.append("brokered credential access still requires no ambient credentials")
+        if EGRESS_SIDE_EFFECTS.intersection(set(manifest.get("side_effects", []))) and manifest.get("data_egress_capable") is not True:
+            errors.append("tool with outbound write/public output side effects must declare data_egress_capable")
+
+    elif record_type == "data_egress_authorization":
+        authorized_at, e1 = parse_datetime(record.get("authorized_at"), "authorized_at")
+        valid_until, e2 = parse_datetime(record.get("valid_until"), "valid_until")
+        errors.extend(e1 + e2)
+        if authorized_at and valid_until and valid_until <= authorized_at:
+            errors.append("data egress valid_until must be later than authorized_at")
+        if record.get("issuer", {}).get("issuer_id") == record.get("agent_id"):
+            errors.append("agent must not authorize its own data egress")
+        required = set(record.get("transformations", {}).get("required", []))
+        applied = set(record.get("transformations", {}).get("applied", []))
+        if not required.issubset(applied):
+            errors.append("required data transformations were not all applied")
+        if record.get("source_data", {}).get("estimated_bytes", 0) > record.get("limits", {}).get("max_bytes", -1):
+            errors.append("estimated egress size exceeds max_bytes")
+        if record.get("decision") == "allowed":
+            errors.extend(all_true(record.get("checks", {}), (
+                "data_classes_within_grant", "destination_within_grant", "content_digest_bound",
+                "transformations_applied", "secrets_absent", "pii_policy_satisfied",
+                "size_within_limit", "retention_bounded", "human_review_satisfied",
+            ), "checks"))
+
+    elif record_type == "runtime_interlock_record":
+        checked_at, e1 = parse_datetime(record.get("checked_at"), "checked_at")
+        valid_until, e2 = parse_datetime(record.get("valid_until"), "valid_until")
+        errors.extend(e1 + e2)
+        if checked_at and valid_until and valid_until <= checked_at:
+            errors.append("runtime interlock valid_until must be later than checked_at")
+        checks = record.get("checks", {})
+        monitors = record.get("monitors", {})
+        if record.get("decision") == "permit":
+            errors.extend(all_true(checks, (
+                "context_valid", "policy_engine_healthy", "recorder_healthy",
+                "network_guard_healthy", "credential_broker_healthy", "tool_guard_healthy",
+                "egress_guard_healthy", "revocation_clear", "grant_epoch_current",
+            ), "checks"))
+            unhealthy = [name for name, state in monitors.items() if state != "healthy"]
+            if unhealthy:
+                errors.append(f"runtime interlock cannot permit with unhealthy monitors: {unhealthy}")
+            if record.get("triggers"):
+                errors.append("runtime interlock cannot permit while triggers are active")
+
+    elif record_type == "action_gate_receipt" and record.get("decision") == "allowed":
+        errors.extend(all_true(record.get("checks", {}), (
+            "execution_context_valid", "context_bound_to_agent", "authority_domain_bound",
+            "tool_identity_valid", "tool_digest_current", "tool_allowed_in_context",
+            "runtime_interlock_armed", "interlock_fail_closed", "data_boundary_satisfied",
+        ), "checks"))
+
+    elif record_type == "execution_continuity_receipt" and record.get("decision") == "continue":
+        errors.extend(all_true(record.get("checks", {}), (
+            "execution_context_still_valid", "tool_identity_unchanged",
+            "runtime_interlock_still_armed", "data_boundary_still_satisfied",
+        ), "checks"))
+
+    elif record_type == "runtime_trace_record":
+        if record.get("final_status") == "completed":
+            if record.get("context_drift_observed"):
+                errors.append("completed runtime trace must not contain context drift")
+            if record.get("tool_substitution_observed"):
+                errors.append("completed runtime trace must not contain tool substitution")
+            if record.get("data_egress_violation_observed"):
+                errors.append("completed runtime trace must not contain a data egress violation")
+
+    return errors
+
+
+def _active_at(record: dict[str, Any], start_field: str, end_field: str, moment: datetime | None) -> bool:
+    if moment is None:
+        return False
+    start, _ = parse_datetime(record.get(start_field), start_field)
+    end, _ = parse_datetime(record.get(end_field), end_field)
+    return bool(start and end and start <= moment < end)
+
+
+def v04_cross_record_errors(record: dict[str, Any], registry: dict[str, dict[str, Any]]) -> list[str]:
+    errors: list[str] = []
+    record_type = record.get("record_type")
+
+    if record_type == "execution_context_attestation":
+        grant = registry.get(record.get("grant_id"))
+        if grant is None:
+            return [f"grant_id not found: {record.get('grant_id')}"]
+        if grant.get("agent_id") != record.get("agent_id"):
+            errors.append("execution context agent_id differs from grant")
+        if grant.get("authority_domain_id") != record.get("authority_domain_id"):
+            errors.append("execution context authority_domain_id differs from grant")
+        effective_epoch, effective_expiry, state_errors = effective_grant_state(grant, registry)
+        errors.extend(state_errors)
+        if record.get("grant_epoch") != effective_epoch:
+            errors.append("execution context uses stale grant_epoch")
+        attested_at, _ = parse_datetime(record.get("attested_at"), "attested_at")
+        valid_until, _ = parse_datetime(record.get("valid_until"), "valid_until")
+        grant_start, _ = parse_datetime(grant.get("valid_from"), "grant.valid_from")
+        if attested_at and grant_start and attested_at < grant_start:
+            errors.append("execution context attested before grant validity")
+        if valid_until and effective_expiry and valid_until > effective_expiry:
+            errors.append("execution context outlives effective grant")
+        if attested_at and current_domain_epoch(record.get("authority_domain_id"), attested_at, registry) != record.get("observed_revocation_epoch"):
+            errors.append("execution context observed_revocation_epoch is stale")
+
+    elif record_type == "tool_identity_attestation":
+        for context_id in record.get("allowed_context_ids", []):
+            context = registry.get(context_id)
+            if context is None:
+                errors.append(f"allowed execution context not found: {context_id}")
+            elif context.get("authority_domain_id") != record.get("authority_domain_id"):
+                errors.append("tool attestation context has different authority domain")
+
+    elif record_type == "data_egress_authorization":
+        grant = registry.get(record.get("grant_id"))
+        context = registry.get(record.get("context_id"))
+        tool = registry.get(record.get("tool_attestation_id"))
+        if grant is None:
+            errors.append(f"grant_id not found: {record.get('grant_id')}")
+        if context is None:
+            errors.append(f"context_id not found: {record.get('context_id')}")
+        if tool is None:
+            errors.append(f"tool_attestation_id not found: {record.get('tool_attestation_id')}")
+        if not grant or not context or not tool:
+            return errors
+        for other, label in ((grant, "grant"), (context, "execution context")):
+            for field in ("agent_id", "authority_domain_id", "grant_id"):
+                if field in other and record.get(field) != other.get(field):
+                    errors.append(f"data egress {field} differs from {label}")
+        if context.get("grant_id") != record.get("grant_id"):
+            errors.append("data egress context is bound to another grant")
+        if tool.get("authority_domain_id") != record.get("authority_domain_id"):
+            errors.append("data egress tool has different authority domain")
+        if record.get("context_id") not in tool.get("allowed_context_ids", []):
+            errors.append("data egress tool is not authorized in execution context")
+        if tool.get("manifest", {}).get("data_egress_capable") is not True:
+            errors.append("data egress authorization references a non-egress-capable tool")
+        constraints = grant.get("constraints", {})
+        if not set(record.get("source_data", {}).get("data_classes", [])).issubset(set(constraints.get("data_classes", []))):
+            errors.append("data egress classes exceed grant constraints")
+        if record.get("destination", {}).get("network_destination") not in constraints.get("network_destinations", []):
+            errors.append("data egress destination is outside grant constraints")
+        if record.get("destination", {}).get("target") not in grant.get("capability", {}).get("targets", []):
+            errors.append("data egress target is outside grant capability")
+        authorized_at, _ = parse_datetime(record.get("authorized_at"), "authorized_at")
+        if authorized_at and not _active_at(context, "attested_at", "valid_until", authorized_at):
+            errors.append("data egress authorized outside execution context validity")
+        if authorized_at and not _active_at(tool, "attested_at", "valid_until", authorized_at):
+            errors.append("data egress authorized outside tool attestation validity")
+
+    elif record_type == "runtime_interlock_record":
+        grant = registry.get(record.get("grant_id"))
+        context = registry.get(record.get("context_id"))
+        if grant is None:
+            errors.append(f"grant_id not found: {record.get('grant_id')}")
+        if context is None:
+            errors.append(f"context_id not found: {record.get('context_id')}")
+        if not grant or not context:
+            return errors
+        for field in ("agent_id", "authority_domain_id", "grant_id", "grant_epoch", "observed_revocation_epoch"):
+            if field in context and record.get(field) != context.get(field):
+                errors.append(f"runtime interlock {field} differs from execution context")
+        checked_at, _ = parse_datetime(record.get("checked_at"), "checked_at")
+        valid_until, _ = parse_datetime(record.get("valid_until"), "valid_until")
+        if checked_at and not _active_at(context, "attested_at", "valid_until", checked_at):
+            errors.append("runtime interlock checked outside execution context validity")
+        context_expiry, _ = parse_datetime(context.get("valid_until"), "context.valid_until")
+        if valid_until and context_expiry and valid_until > context_expiry:
+            errors.append("runtime interlock outlives execution context")
+        if record.get("decision") == "permit" and context.get("status") != "trusted":
+            errors.append("runtime interlock cannot permit an untrusted execution context")
+
+    elif record_type == "action_gate_receipt":
+        context = registry.get(record.get("execution_context_id"))
+        tool = registry.get(record.get("tool_attestation_id"))
+        interlock = registry.get(record.get("runtime_interlock_id"))
+        egress_id = record.get("data_egress_authorization_id")
+        egress = registry.get(egress_id) if egress_id else None
+        for value, label in ((context, "execution_context_id"), (tool, "tool_attestation_id"), (interlock, "runtime_interlock_id")):
+            if value is None:
+                errors.append(f"{label} not found: {record.get(label)}")
+        if not context or not tool or not interlock:
+            return errors
+        for other, label in ((context, "execution context"), (interlock, "runtime interlock")):
+            for field in ("agent_id", "authority_domain_id", "grant_id", "grant_epoch"):
+                if record.get(field) != other.get(field):
+                    errors.append(f"action gate {field} differs from {label}")
+        if tool.get("authority_domain_id") != record.get("authority_domain_id"):
+            errors.append("action gate tool attestation has different authority domain")
+        if record.get("execution_context_id") not in tool.get("allowed_context_ids", []):
+            errors.append("action gate tool is not authorized in execution context")
+        if tool.get("tool_id") != record.get("requested_action", {}).get("tool"):
+            errors.append("action gate requested tool differs from attested tool identity")
+        if record.get("requested_action", {}).get("action_type") not in tool.get("manifest", {}).get("action_types", []):
+            errors.append("action gate action_type is absent from tool manifest")
+        evaluated_at, _ = parse_datetime(record.get("evaluated_at"), "evaluated_at")
+        if evaluated_at and not _active_at(context, "attested_at", "valid_until", evaluated_at):
+            errors.append("execution context is not valid at action gate evaluation")
+        if evaluated_at and not _active_at(tool, "attested_at", "valid_until", evaluated_at):
+            errors.append("tool attestation is not valid at action gate evaluation")
+        if evaluated_at and not _active_at(interlock, "checked_at", "valid_until", evaluated_at):
+            errors.append("runtime interlock is not valid at action gate evaluation")
+        if context.get("status") != "trusted":
+            errors.append("action gate requires trusted execution context")
+        if tool.get("status") != "trusted":
+            errors.append("action gate requires trusted tool identity")
+        if interlock.get("decision") != "permit":
+            errors.append("action gate requires permitting runtime interlock")
+        requires_egress = bool(EGRESS_SIDE_EFFECTS.intersection(set(tool.get("manifest", {}).get("side_effects", []))))
+        if requires_egress and egress is None:
+            errors.append("outbound write/public output action requires data egress authorization")
+        if not requires_egress and egress_id is not None:
+            errors.append("non-egress action must not attach data egress authorization")
+        if egress:
+            if egress.get("decision") != "allowed":
+                errors.append("action gate data egress authorization is not allowed")
+            for field in ("agent_id", "authority_domain_id", "grant_id", "action_digest"):
+                if record.get(field) != egress.get(field):
+                    errors.append(f"action gate {field} differs from data egress authorization")
+            if record.get("execution_context_id") != egress.get("context_id"):
+                errors.append("action gate execution context differs from data egress authorization")
+            if record.get("tool_attestation_id") != egress.get("tool_attestation_id"):
+                errors.append("action gate tool attestation differs from data egress authorization")
+            if evaluated_at and not _active_at(egress, "authorized_at", "valid_until", evaluated_at):
+                errors.append("data egress authorization is not valid at action gate evaluation")
+
+    elif record_type == "execution_continuity_receipt":
+        gate = registry.get(record.get("receipt_id"))
+        if gate:
+            for field in ("execution_context_id", "tool_attestation_id", "runtime_interlock_id", "data_egress_authorization_id"):
+                if record.get(field) != gate.get(field):
+                    errors.append(f"continuity {field} differs from action gate")
+            if record.get("decision") == "continue":
+                checked_at, _ = parse_datetime(record.get("checked_at"), "checked_at")
+                context = registry.get(record.get("execution_context_id"))
+                tool = registry.get(record.get("tool_attestation_id"))
+                interlock = registry.get(record.get("runtime_interlock_id"))
+                egress_id = record.get("data_egress_authorization_id")
+                egress = registry.get(egress_id) if egress_id else None
+                if context and checked_at and not _active_at(context, "attested_at", "valid_until", checked_at):
+                    errors.append("continuity must not continue after execution context expiry")
+                if tool and checked_at and not _active_at(tool, "attested_at", "valid_until", checked_at):
+                    errors.append("continuity must not continue after tool attestation expiry")
+                if interlock and checked_at and not _active_at(interlock, "checked_at", "valid_until", checked_at):
+                    errors.append("continuity must not continue after runtime interlock expiry")
+                if interlock and interlock.get("decision") != "permit":
+                    errors.append("continuity requires permitting runtime interlock")
+                if egress and checked_at and not _active_at(egress, "authorized_at", "valid_until", checked_at):
+                    errors.append("continuity must not continue after data egress authorization expiry")
+
+    elif record_type == "runtime_trace_record":
+        gate = registry.get(record.get("receipt_id"))
+        if gate:
+            for field in ("execution_context_id", "tool_attestation_id", "runtime_interlock_id", "data_egress_authorization_id"):
+                if record.get(field) != gate.get(field):
+                    errors.append(f"runtime trace {field} differs from action gate")
+        if record.get("context_drift_observed") and record.get("final_status") not in {"blocked", "failed", "zeroized"}:
+            errors.append("context drift requires blocked, failed, or zeroized final status")
+        if record.get("tool_substitution_observed") and record.get("final_status") not in {"blocked", "failed", "zeroized"}:
+            errors.append("tool substitution requires blocked, failed, or zeroized final status")
+        if record.get("data_egress_violation_observed") and record.get("final_status") not in {"blocked", "failed", "zeroized"}:
+            errors.append("data egress violation requires blocked, failed, or zeroized final status")
+
+    return errors
+
+
 def validate_record(path: Path, schemas: dict[str, dict[str, Any]], registry: dict[str, dict[str, Any]]) -> list[str]:
     try:
         record = load_yaml(path)
@@ -966,13 +1278,15 @@ def validate_record(path: Path, schemas: dict[str, dict[str, Any]], registry: di
         return errors
     errors.extend(semantic_errors(record))
     errors.extend(v03_semantic_errors(record))
+    errors.extend(v04_semantic_errors(record))
     errors.extend(cross_record_errors(record, registry))
     errors.extend(v03_cross_record_errors(record, registry))
+    errors.extend(v04_cross_record_errors(record, registry))
     return errors
 
 
 def main() -> int:
-    print("=== Zero-Type Agent Zero-Authority Profile v0.3 Validation ===")
+    print("=== Zero-Type Agent Zero-Authority Profile v0.4 Validation ===")
     try:
         schemas = {record_type: load_json(path) for record_type, path in SCHEMA_BY_RECORD_TYPE.items()}
     except Exception as exc:  # noqa: BLE001
