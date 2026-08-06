@@ -1,4 +1,4 @@
-schema_version: 0.3.0
+schema_version: 0.4.0
 record_type: capability_revocation_record
 revocation_id: capability-revocation:fail:incomplete-cascade-001
 authority_domain_id: authority-domain:demo:001
@@ -24,4 +24,3 @@ propagation:
   evidence_refs:
   - evidence:revocation-broadcast:demo-001
   - evidence:revocation-ack:demo-001
-
