@@ -1,0 +1,36 @@
+schema_version: 0.4.0
+record_type: execution_continuity_receipt
+continuity_id: execution-continuity:fail:context-expired-001
+agent_id: agent:worker:001
+authority_domain_id: authority-domain:demo:001
+grant_id: capability-grant:demo:child-001
+grant_epoch: 2
+receipt_id: action-gate:demo:001
+execution_token_id: execution-token:demo:001
+risk_assessment_id: risk-assessment:demo:low-001
+authorization_quorum_id: authorization-quorum:demo:low-001
+commitment_id: null
+checked_at: '2026-08-04T01:13:00Z'
+observed_revocation_epoch: 0
+checks:
+  grant_active: true
+  grant_epoch_current: true
+  revocation_clear: true
+  execution_token_valid: true
+  execution_token_unrevoked: true
+  within_effective_validity: true
+  budget_remaining: true
+  recorder_healthy: true
+  risk_profile_unchanged: true
+  quorum_still_satisfied: true
+  commitment_still_valid: true
+  execution_context_still_valid: true
+  tool_identity_unchanged: true
+  runtime_interlock_still_armed: true
+  data_boundary_still_satisfied: true
+decision: continue
+next_check_due_at: '2026-08-04T01:13:20Z'
+execution_context_id: execution-context:demo:low-001
+tool_attestation_id: tool-attestation:demo:low-001
+runtime_interlock_id: runtime-interlock:demo:low-001
+data_egress_authorization_id: null
