@@ -1,0 +1,46 @@
+schema_version: 0.4.0
+record_type: data_egress_authorization
+egress_id: data-egress:fail:destination-001
+agent_id: agent:publisher:001
+authority_domain_id: authority-domain:demo:critical-001
+grant_id: capability-grant:demo:critical-001
+action_digest: sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+context_id: execution-context:demo:critical-001
+tool_attestation_id: tool-attestation:demo:critical-001
+source_data:
+  data_classes:
+  - approved_release_material
+  content_digest: sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  estimated_bytes: 4096
+destination:
+  target: release:public:demo-001
+  network_destination: attacker.example.net
+  retention_seconds: 2592000
+limits:
+  max_bytes: 8192
+  allowed_content_types:
+  - application/json
+  - text/markdown
+transformations:
+  required:
+  - redact_secrets
+  - minimize_fields
+  applied:
+  - redact_secrets
+  - minimize_fields
+issuer:
+  issuer_type: human
+  issuer_id: human:release-owner:001
+authorized_at: '2026-08-04T01:59:30Z'
+valid_until: '2026-08-04T02:01:00Z'
+checks:
+  data_classes_within_grant: true
+  destination_within_grant: true
+  content_digest_bound: true
+  transformations_applied: true
+  secrets_absent: true
+  pii_policy_satisfied: true
+  size_within_limit: true
+  retention_bounded: true
+  human_review_satisfied: true
+decision: allowed
