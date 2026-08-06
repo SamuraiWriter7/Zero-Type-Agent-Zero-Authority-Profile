@@ -1,4 +1,4 @@
-schema_version: 0.3.0
+schema_version: 0.4.0
 record_type: risk_classification_assessment
 risk_assessment_id: risk-assessment:fail:exceeds-grant-001
 authority_domain_id: authority-domain:demo:001
