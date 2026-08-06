@@ -19,6 +19,10 @@
     "risk_assessment_id",
     "authorization_quorum_id",
     "commitment_id",
+    "data_egress_authorization_id",
+    "runtime_interlock_id",
+    "tool_attestation_id",
+    "execution_context_id",
     "requested_action",
     "checks",
     "continuity",
@@ -26,7 +30,7 @@
   ],
   "properties": {
     "schema_version": {
-      "const": "0.3.0"
+      "const": "0.4.0"
     },
     "record_type": {
       "const": "action_gate_receipt"
@@ -129,7 +133,16 @@
         "risk_classified",
         "risk_within_grant",
         "authorization_quorum_satisfied",
-        "commitment_satisfied"
+        "commitment_satisfied",
+        "execution_context_valid",
+        "context_bound_to_agent",
+        "authority_domain_bound",
+        "tool_identity_valid",
+        "tool_digest_current",
+        "tool_allowed_in_context",
+        "runtime_interlock_armed",
+        "interlock_fail_closed",
+        "data_boundary_satisfied"
       ],
       "properties": {
         "grant_active": {
@@ -181,6 +194,33 @@
           "type": "boolean"
         },
         "commitment_satisfied": {
+          "type": "boolean"
+        },
+        "execution_context_valid": {
+          "type": "boolean"
+        },
+        "context_bound_to_agent": {
+          "type": "boolean"
+        },
+        "authority_domain_bound": {
+          "type": "boolean"
+        },
+        "tool_identity_valid": {
+          "type": "boolean"
+        },
+        "tool_digest_current": {
+          "type": "boolean"
+        },
+        "tool_allowed_in_context": {
+          "type": "boolean"
+        },
+        "runtime_interlock_armed": {
+          "type": "boolean"
+        },
+        "interlock_fail_closed": {
+          "type": "boolean"
+        },
+        "data_boundary_satisfied": {
           "type": "boolean"
         }
       }
@@ -248,6 +288,25 @@
         "type": "string",
         "minLength": 1
       }
+    },
+    "execution_context_id": {
+      "type": "string",
+      "pattern": "^execution-context:[A-Za-z0-9._:-]+$"
+    },
+    "tool_attestation_id": {
+      "type": "string",
+      "pattern": "^tool-attestation:[A-Za-z0-9._:-]+$"
+    },
+    "runtime_interlock_id": {
+      "type": "string",
+      "pattern": "^runtime-interlock:[A-Za-z0-9._:-]+$"
+    },
+    "data_egress_authorization_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^data-egress:[A-Za-z0-9._:-]+$"
     }
   },
   "allOf": [
@@ -290,3 +349,4 @@
     }
   ]
 }
+
