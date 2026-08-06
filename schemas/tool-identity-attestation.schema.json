@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "$id": "https://example.org/zeroshiki/schemas/tool-identity-attestation.schema.json",
+  "title": "Tool Identity Attestation",
+  "required": [
+    "schema_version",
+    "record_type",
+    "tool_attestation_id",
+    "tool_id",
+    "tool_version",
+    "tool_digest",
+    "manifest_digest",
+    "authority_domain_id",
+    "allowed_context_ids",
+    "manifest",
+    "attestor",
+    "attested_at",
+    "valid_until",
+    "checks",
+    "status"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.4.0"
+    },
+    "record_type": {
+      "const": "tool_identity_attestation"
+    },
+    "tool_attestation_id": {
+      "type": "string",
+      "pattern": "^tool-attestation:[A-Za-z0-9._:-]+$"
+    },
+    "tool_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tool_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tool_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "manifest_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "authority_domain_id": {
+      "type": "string",
+      "pattern": "^authority-domain:[A-Za-z0-9._:-]+$"
+    },
+    "allowed_context_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^execution-context:[A-Za-z0-9._:-]+$"
+      }
+    },
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_types",
+        "side_effects",
+        "network_destinations",
+        "credential_access",
+        "data_egress_capable"
+      ],
+      "properties": {
+        "action_types": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "side_effects": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "none",
+              "network_read",
+              "network_write",
+              "file_write",
+              "public_output",
+              "process_exec"
+            ]
+          }
+        },
+        "network_destinations": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "credential_access": {
+          "type": "string",
+          "enum": [
+            "none",
+            "brokered"
+          ]
+        },
+        "data_egress_capable": {
+          "type": "boolean"
+        }
+      }
+    },
+    "attestor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attestor_type",
+        "attestor_id"
+      ],
+      "properties": {
+        "attestor_type": {
+          "type": "string",
+          "enum": [
+            "supply_chain_verifier",
+            "independent_security_service",
+            "human_supervised_service"
+          ]
+        },
+        "attestor_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "attested_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "identity_verified",
+        "binary_digest_verified",
+        "manifest_verified",
+        "supply_chain_verified",
+        "permissions_minimized",
+        "no_ambient_credentials"
+      ],
+      "properties": {
+        "identity_verified": {
+          "type": "boolean"
+        },
+        "binary_digest_verified": {
+          "type": "boolean"
+        },
+        "manifest_verified": {
+          "type": "boolean"
+        },
+        "supply_chain_verified": {
+          "type": "boolean"
+        },
+        "permissions_minimized": {
+          "type": "boolean"
+        },
+        "no_ambient_credentials": {
+          "type": "boolean"
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "trusted",
+        "rejected",
+        "revoked"
+      ]
+    }
+  }
+}
