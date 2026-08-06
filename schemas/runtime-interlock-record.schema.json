@@ -1,0 +1,200 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "$id": "https://example.org/zeroshiki/schemas/runtime-interlock-record.schema.json",
+  "title": "Runtime Interlock Record",
+  "required": [
+    "schema_version",
+    "record_type",
+    "interlock_id",
+    "agent_id",
+    "authority_domain_id",
+    "grant_id",
+    "grant_epoch",
+    "observed_revocation_epoch",
+    "context_id",
+    "checked_at",
+    "valid_until",
+    "fail_closed",
+    "monitors",
+    "checks",
+    "decision"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.4.0"
+    },
+    "record_type": {
+      "const": "runtime_interlock_record"
+    },
+    "interlock_id": {
+      "type": "string",
+      "pattern": "^runtime-interlock:[A-Za-z0-9._:-]+$"
+    },
+    "agent_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authority_domain_id": {
+      "type": "string",
+      "pattern": "^authority-domain:[A-Za-z0-9._:-]+$"
+    },
+    "grant_id": {
+      "type": "string",
+      "pattern": "^capability-grant:[A-Za-z0-9._:-]+$"
+    },
+    "grant_epoch": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "observed_revocation_epoch": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "context_id": {
+      "type": "string",
+      "pattern": "^execution-context:[A-Za-z0-9._:-]+$"
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "fail_closed": {
+      "const": true
+    },
+    "monitors": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_engine",
+        "recorder",
+        "network_guard",
+        "credential_broker",
+        "tool_guard",
+        "egress_guard"
+      ],
+      "properties": {
+        "policy_engine": {
+          "type": "string",
+          "enum": [
+            "healthy",
+            "degraded",
+            "failed"
+          ]
+        },
+        "recorder": {
+          "type": "string",
+          "enum": [
+            "healthy",
+            "degraded",
+            "failed"
+          ]
+        },
+        "network_guard": {
+          "type": "string",
+          "enum": [
+            "healthy",
+            "degraded",
+            "failed"
+          ]
+        },
+        "credential_broker": {
+          "type": "string",
+          "enum": [
+            "healthy",
+            "degraded",
+            "failed"
+          ]
+        },
+        "tool_guard": {
+          "type": "string",
+          "enum": [
+            "healthy",
+            "degraded",
+            "failed"
+          ]
+        },
+        "egress_guard": {
+          "type": "string",
+          "enum": [
+            "healthy",
+            "degraded",
+            "failed"
+          ]
+        }
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "context_valid",
+        "policy_engine_healthy",
+        "recorder_healthy",
+        "network_guard_healthy",
+        "credential_broker_healthy",
+        "tool_guard_healthy",
+        "egress_guard_healthy",
+        "revocation_clear",
+        "grant_epoch_current"
+      ],
+      "properties": {
+        "context_valid": {
+          "type": "boolean"
+        },
+        "policy_engine_healthy": {
+          "type": "boolean"
+        },
+        "recorder_healthy": {
+          "type": "boolean"
+        },
+        "network_guard_healthy": {
+          "type": "boolean"
+        },
+        "credential_broker_healthy": {
+          "type": "boolean"
+        },
+        "tool_guard_healthy": {
+          "type": "boolean"
+        },
+        "egress_guard_healthy": {
+          "type": "boolean"
+        },
+        "revocation_clear": {
+          "type": "boolean"
+        },
+        "grant_epoch_current": {
+          "type": "boolean"
+        }
+      }
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "permit",
+        "suspend",
+        "zeroize"
+      ]
+    },
+    "triggers": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "context_mismatch",
+          "tool_digest_mismatch",
+          "egress_violation",
+          "monitor_failure",
+          "revocation_detected",
+          "grant_epoch_stale"
+        ]
+      }
+    }
+  }
+}
