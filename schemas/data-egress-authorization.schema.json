@@ -1,0 +1,273 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "$id": "https://example.org/zeroshiki/schemas/data-egress-authorization.schema.json",
+  "title": "Data Egress Authorization",
+  "required": [
+    "schema_version",
+    "record_type",
+    "egress_id",
+    "agent_id",
+    "authority_domain_id",
+    "grant_id",
+    "action_digest",
+    "context_id",
+    "tool_attestation_id",
+    "source_data",
+    "destination",
+    "limits",
+    "transformations",
+    "issuer",
+    "authorized_at",
+    "valid_until",
+    "checks",
+    "decision"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.4.0"
+    },
+    "record_type": {
+      "const": "data_egress_authorization"
+    },
+    "egress_id": {
+      "type": "string",
+      "pattern": "^data-egress:[A-Za-z0-9._:-]+$"
+    },
+    "agent_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authority_domain_id": {
+      "type": "string",
+      "pattern": "^authority-domain:[A-Za-z0-9._:-]+$"
+    },
+    "grant_id": {
+      "type": "string",
+      "pattern": "^capability-grant:[A-Za-z0-9._:-]+$"
+    },
+    "action_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "context_id": {
+      "type": "string",
+      "pattern": "^execution-context:[A-Za-z0-9._:-]+$"
+    },
+    "tool_attestation_id": {
+      "type": "string",
+      "pattern": "^tool-attestation:[A-Za-z0-9._:-]+$"
+    },
+    "source_data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "data_classes",
+        "content_digest",
+        "estimated_bytes"
+      ],
+      "properties": {
+        "data_classes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "content_digest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "estimated_bytes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "destination": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target",
+        "network_destination",
+        "retention_seconds"
+      ],
+      "properties": {
+        "target": {
+          "type": "string",
+          "minLength": 1
+        },
+        "network_destination": {
+          "type": "string",
+          "minLength": 1
+        },
+        "retention_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 31536000
+        }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_bytes",
+        "allowed_content_types"
+      ],
+      "properties": {
+        "max_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "allowed_content_types": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "transformations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required",
+        "applied"
+      ],
+      "properties": {
+        "required": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "applied": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "issuer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "issuer_type",
+        "issuer_id"
+      ],
+      "properties": {
+        "issuer_type": {
+          "type": "string",
+          "enum": [
+            "human",
+            "independent_authority",
+            "authorized_service"
+          ]
+        },
+        "issuer_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "authorized_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "data_classes_within_grant",
+        "destination_within_grant",
+        "content_digest_bound",
+        "transformations_applied",
+        "secrets_absent",
+        "pii_policy_satisfied",
+        "size_within_limit",
+        "retention_bounded",
+        "human_review_satisfied"
+      ],
+      "properties": {
+        "data_classes_within_grant": {
+          "type": "boolean"
+        },
+        "destination_within_grant": {
+          "type": "boolean"
+        },
+        "content_digest_bound": {
+          "type": "boolean"
+        },
+        "transformations_applied": {
+          "type": "boolean"
+        },
+        "secrets_absent": {
+          "type": "boolean"
+        },
+        "pii_policy_satisfied": {
+          "type": "boolean"
+        },
+        "size_within_limit": {
+          "type": "boolean"
+        },
+        "retention_bounded": {
+          "type": "boolean"
+        },
+        "human_review_satisfied": {
+          "type": "boolean"
+        }
+      }
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "allowed",
+        "denied"
+      ]
+    },
+    "reasons": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "decision": {
+            "const": "denied"
+          }
+        },
+        "required": [
+          "decision"
+        ]
+      },
+      "then": {
+        "required": [
+          "reasons"
+        ]
+      }
+    }
+  ]
+}
