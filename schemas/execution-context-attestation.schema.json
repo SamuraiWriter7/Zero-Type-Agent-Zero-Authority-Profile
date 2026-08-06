@@ -1,0 +1,222 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "$id": "https://example.org/zeroshiki/schemas/execution-context-attestation.schema.json",
+  "title": "Execution Context Attestation",
+  "required": [
+    "schema_version",
+    "record_type",
+    "context_id",
+    "agent_id",
+    "authority_domain_id",
+    "grant_id",
+    "grant_epoch",
+    "observed_revocation_epoch",
+    "runtime",
+    "policy_engine",
+    "recorder_id",
+    "attestor",
+    "attested_at",
+    "valid_until",
+    "checks",
+    "status"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.4.0"
+    },
+    "record_type": {
+      "const": "execution_context_attestation"
+    },
+    "context_id": {
+      "type": "string",
+      "pattern": "^execution-context:[A-Za-z0-9._:-]+$"
+    },
+    "agent_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authority_domain_id": {
+      "type": "string",
+      "pattern": "^authority-domain:[A-Za-z0-9._:-]+$"
+    },
+    "grant_id": {
+      "type": "string",
+      "pattern": "^capability-grant:[A-Za-z0-9._:-]+$"
+    },
+    "grant_epoch": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "observed_revocation_epoch": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtime_id",
+        "environment_class",
+        "image_digest",
+        "code_digest",
+        "filesystem_mode",
+        "network_mode",
+        "credential_mode",
+        "process_namespace_isolated"
+      ],
+      "properties": {
+        "runtime_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "environment_class": {
+          "type": "string",
+          "enum": [
+            "ephemeral_sandbox",
+            "isolated_vm",
+            "confidential_compute",
+            "on_prem_isolate"
+          ]
+        },
+        "image_digest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "code_digest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "filesystem_mode": {
+          "type": "string",
+          "enum": [
+            "read_only",
+            "ephemeral_write"
+          ]
+        },
+        "network_mode": {
+          "type": "string",
+          "enum": [
+            "denied",
+            "allowlist_only"
+          ]
+        },
+        "credential_mode": {
+          "const": "brokered_short_lived"
+        },
+        "process_namespace_isolated": {
+          "const": true
+        }
+      }
+    },
+    "policy_engine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_engine_id",
+        "policy_digest",
+        "fail_closed"
+      ],
+      "properties": {
+        "policy_engine_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "policy_digest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "fail_closed": {
+          "const": true
+        }
+      }
+    },
+    "recorder_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "attestor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attestor_type",
+        "attestor_id"
+      ],
+      "properties": {
+        "attestor_type": {
+          "type": "string",
+          "enum": [
+            "hardware_attestor",
+            "independent_runtime_service",
+            "human_supervised_service"
+          ]
+        },
+        "attestor_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "attested_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtime_identity_verified",
+        "image_digest_verified",
+        "code_digest_verified",
+        "isolation_enforced",
+        "network_policy_loaded",
+        "credential_broker_bound",
+        "recorder_bound",
+        "policy_engine_bound",
+        "revocation_epoch_current"
+      ],
+      "properties": {
+        "runtime_identity_verified": {
+          "type": "boolean"
+        },
+        "image_digest_verified": {
+          "type": "boolean"
+        },
+        "code_digest_verified": {
+          "type": "boolean"
+        },
+        "isolation_enforced": {
+          "type": "boolean"
+        },
+        "network_policy_loaded": {
+          "type": "boolean"
+        },
+        "credential_broker_bound": {
+          "type": "boolean"
+        },
+        "recorder_bound": {
+          "type": "boolean"
+        },
+        "policy_engine_bound": {
+          "type": "boolean"
+        },
+        "revocation_epoch_current": {
+          "type": "boolean"
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "trusted",
+        "rejected",
+        "revoked"
+      ]
+    }
+  }
+}
