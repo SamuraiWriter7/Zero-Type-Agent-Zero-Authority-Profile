@@ -1,0 +1,32 @@
+schema_version: 0.4.0
+record_type: tool_identity_attestation
+tool_attestation_id: tool-attestation:demo:low-001
+tool_id: tool:http-client:readonly
+tool_version: 1.0.0
+tool_digest: sha256:7777777777777777777777777777777777777777777777777777777777777777
+manifest_digest: sha256:8888888888888888888888888888888888888888888888888888888888888888
+authority_domain_id: authority-domain:demo:001
+allowed_context_ids:
+- execution-context:demo:low-001
+manifest:
+  action_types:
+  - http_get
+  side_effects:
+  - network_read
+  network_destinations:
+  - status.example.org
+  credential_access: none
+  data_egress_capable: false
+attestor:
+  attestor_type: supply_chain_verifier
+  attestor_id: attestor:supply-chain:001
+attested_at: '2026-08-04T01:10:05Z'
+valid_until: '2026-08-04T01:12:30Z'
+checks:
+  identity_verified: true
+  binary_digest_verified: true
+  manifest_verified: true
+  supply_chain_verified: true
+  permissions_minimized: true
+  no_ambient_credentials: true
+status: trusted
