@@ -17,6 +17,10 @@
     "risk_assessment_id",
     "authorization_quorum_id",
     "commitment_id",
+    "data_egress_authorization_id",
+    "runtime_interlock_id",
+    "tool_attestation_id",
+    "execution_context_id",
     "checked_at",
     "observed_revocation_epoch",
     "checks",
@@ -24,7 +28,7 @@
   ],
   "properties": {
     "schema_version": {
-      "const": "0.3.0"
+      "const": "0.4.0"
     },
     "record_type": {
       "const": "execution_continuity_receipt"
@@ -94,7 +98,11 @@
         "recorder_healthy",
         "risk_profile_unchanged",
         "quorum_still_satisfied",
-        "commitment_still_valid"
+        "commitment_still_valid",
+        "execution_context_still_valid",
+        "tool_identity_unchanged",
+        "runtime_interlock_still_armed",
+        "data_boundary_still_satisfied"
       ],
       "properties": {
         "grant_active": {
@@ -129,6 +137,18 @@
         },
         "commitment_still_valid": {
           "type": "boolean"
+        },
+        "execution_context_still_valid": {
+          "type": "boolean"
+        },
+        "tool_identity_unchanged": {
+          "type": "boolean"
+        },
+        "runtime_interlock_still_armed": {
+          "type": "boolean"
+        },
+        "data_boundary_still_satisfied": {
+          "type": "boolean"
         }
       }
     },
@@ -152,6 +172,25 @@
         "type": "string",
         "minLength": 1
       }
+    },
+    "execution_context_id": {
+      "type": "string",
+      "pattern": "^execution-context:[A-Za-z0-9._:-]+$"
+    },
+    "tool_attestation_id": {
+      "type": "string",
+      "pattern": "^tool-attestation:[A-Za-z0-9._:-]+$"
+    },
+    "runtime_interlock_id": {
+      "type": "string",
+      "pattern": "^runtime-interlock:[A-Za-z0-9._:-]+$"
+    },
+    "data_egress_authorization_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^data-egress:[A-Za-z0-9._:-]+$"
     }
   },
   "allOf": [
