@@ -1,4 +1,4 @@
-schema_version: 0.3.0
+schema_version: 0.4.0
 record_type: execution_continuity_receipt
 continuity_id: execution-continuity:demo:001
 agent_id: agent:worker:001
@@ -24,5 +24,13 @@ checks:
   risk_profile_unchanged: true
   quorum_still_satisfied: true
   commitment_still_valid: true
+  execution_context_still_valid: true
+  tool_identity_unchanged: true
+  runtime_interlock_still_armed: true
+  data_boundary_still_satisfied: true
 decision: continue
 next_check_due_at: '2026-08-04T01:11:40Z'
+execution_context_id: execution-context:demo:low-001
+tool_attestation_id: tool-attestation:demo:low-001
+runtime_interlock_id: runtime-interlock:demo:low-001
+data_egress_authorization_id: null
