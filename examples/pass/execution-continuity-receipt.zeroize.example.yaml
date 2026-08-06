@@ -1,4 +1,4 @@
-schema_version: 0.3.0
+schema_version: 0.4.0
 record_type: execution_continuity_receipt
 continuity_id: execution-continuity:demo:002
 agent_id: agent:worker:001
@@ -24,8 +24,16 @@ checks:
   risk_profile_unchanged: true
   quorum_still_satisfied: true
   commitment_still_valid: true
+  execution_context_still_valid: true
+  tool_identity_unchanged: true
+  runtime_interlock_still_armed: false
+  data_boundary_still_satisfied: true
 decision: zeroize
 reasons:
 - capability grant revoked
 - execution token invalidated
 - revocation epoch advanced
+execution_context_id: execution-context:demo:low-001
+tool_attestation_id: tool-attestation:demo:low-001
+runtime_interlock_id: runtime-interlock:demo:low-001
+data_egress_authorization_id: null
