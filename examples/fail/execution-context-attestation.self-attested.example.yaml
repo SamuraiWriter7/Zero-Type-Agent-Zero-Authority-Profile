@@ -1,0 +1,38 @@
+schema_version: 0.4.0
+record_type: execution_context_attestation
+context_id: execution-context:fail:self-attested-001
+agent_id: agent:worker:001
+authority_domain_id: authority-domain:demo:001
+grant_id: capability-grant:demo:child-001
+grant_epoch: 2
+observed_revocation_epoch: 0
+runtime:
+  runtime_id: runtime:demo:worker-001
+  environment_class: ephemeral_sandbox
+  image_digest: sha256:1111111111111111111111111111111111111111111111111111111111111111
+  code_digest: sha256:2222222222222222222222222222222222222222222222222222222222222222
+  filesystem_mode: read_only
+  network_mode: allowlist_only
+  credential_mode: brokered_short_lived
+  process_namespace_isolated: true
+policy_engine:
+  policy_engine_id: policy-engine:zeroshiki:001
+  policy_digest: sha256:3333333333333333333333333333333333333333333333333333333333333333
+  fail_closed: true
+recorder_id: runtime-guard:demo:001
+attestor:
+  attestor_type: human_supervised_service
+  attestor_id: agent:worker:001
+attested_at: '2026-08-04T01:10:00Z'
+valid_until: '2026-08-04T01:12:30Z'
+checks:
+  runtime_identity_verified: true
+  image_digest_verified: true
+  code_digest_verified: true
+  isolation_enforced: true
+  network_policy_loaded: true
+  credential_broker_bound: true
+  recorder_bound: true
+  policy_engine_bound: true
+  revocation_epoch_current: true
+status: trusted
