@@ -1,0 +1,58 @@
+schema_version: 0.4.0
+record_type: action_gate_receipt
+receipt_id: action-gate:fail:context-replay-001
+agent_id: agent:worker:001
+authority_domain_id: authority-domain:demo:001
+grant_id: capability-grant:demo:child-001
+grant_epoch: 2
+observed_revocation_epoch: 0
+evaluated_at: '2026-08-04T01:11:00Z'
+valid_until: '2026-08-04T01:12:00Z'
+action_digest: sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+risk_assessment_id: risk-assessment:demo:low-001
+authorization_quorum_id: authorization-quorum:demo:low-001
+commitment_id: null
+requested_action:
+  action_type: http_get
+  target: https://status.example.org/public/health
+  tool: tool:http-client:readonly
+  parameters_digest: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+checks:
+  grant_active: true
+  grant_epoch_current: true
+  revocation_clear: true
+  delegation_chain_valid: true
+  within_scope: true
+  target_allowed: true
+  tool_allowed: true
+  within_time_window: true
+  invocation_budget_available: true
+  recorder_available: true
+  irreversible_action: false
+  human_approval_ref: null
+  risk_classified: true
+  risk_within_grant: true
+  authorization_quorum_satisfied: true
+  commitment_satisfied: true
+  execution_context_valid: true
+  context_bound_to_agent: true
+  authority_domain_bound: true
+  tool_identity_valid: true
+  tool_digest_current: true
+  tool_allowed_in_context: true
+  runtime_interlock_armed: true
+  interlock_fail_closed: true
+  data_boundary_satisfied: true
+continuity:
+  required: true
+  interval_seconds: 20
+  max_unchecked_seconds: 30
+decision: allowed
+execution_token:
+  token_id: execution-token:fail:context-replay-001
+  issued_at: '2026-08-04T01:11:00Z'
+  expires_at: '2026-08-04T01:12:00Z'
+execution_context_id: execution-context:demo:critical-001
+tool_attestation_id: tool-attestation:demo:low-001
+runtime_interlock_id: runtime-interlock:demo:low-001
+data_egress_authorization_id: null
