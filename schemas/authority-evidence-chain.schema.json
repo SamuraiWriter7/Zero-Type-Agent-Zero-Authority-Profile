@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/zeroshiki/schemas/authority-evidence-chain.schema.json",
+  "title": "Authority Evidence Chain",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "record_type",
+    "chain_id",
+    "profile_version",
+    "agent_id",
+    "authority_domain_id",
+    "generated_at",
+    "canonicalization",
+    "hash_algorithm",
+    "recorder",
+    "entries",
+    "chain_root",
+    "signature",
+    "status"
+  ],
+  "properties": {
+    "schema_version": {"const": "0.5.0"},
+    "record_type": {"const": "authority_evidence_chain"},
+    "chain_id": {"type": "string", "pattern": "^authority-evidence-chain:[A-Za-z0-9._:-]+$"},
+    "profile_version": {"const": "0.5.0"},
+    "agent_id": {"type": "string", "minLength": 1},
+    "authority_domain_id": {"type": "string", "pattern": "^authority-domain:[A-Za-z0-9._:-]+$"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "canonicalization": {"const": "jcs-like-sorted-json-v1"},
+    "hash_algorithm": {"const": "sha256"},
+    "recorder": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recorder_id", "recorder_type", "independent_from_agent"],
+      "properties": {
+        "recorder_id": {"type": "string", "minLength": 1},
+        "recorder_type": {
+          "type": "string",
+          "enum": ["runtime_guard", "audit_service", "trusted_execution_environment"]
+        },
+        "independent_from_agent": {"const": true}
+      }
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sequence",
+          "record_type",
+          "record_id",
+          "record_digest",
+          "previous_entry_digest",
+          "observed_at",
+          "entry_digest"
+        ],
+        "properties": {
+          "sequence": {"type": "integer", "minimum": 1},
+          "record_type": {"type": "string", "minLength": 1},
+          "record_id": {"type": "string", "minLength": 1},
+          "record_digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+          "previous_entry_digest": {
+            "oneOf": [
+              {"const": "genesis"},
+              {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+            ]
+          },
+          "observed_at": {"type": "string", "format": "date-time"},
+          "entry_digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+        }
+      }
+    },
+    "chain_root": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "signer_id", "key_id", "signed_chain_root", "signature_ref"],
+      "properties": {
+        "algorithm": {"type": "string", "enum": ["ed25519", "ecdsa-p256", "rsa-pss-sha256"]},
+        "signer_id": {"type": "string", "minLength": 1},
+        "key_id": {"type": "string", "minLength": 1},
+        "signed_chain_root": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+        "signature_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "status": {"const": "sealed"}
+  }
+}
