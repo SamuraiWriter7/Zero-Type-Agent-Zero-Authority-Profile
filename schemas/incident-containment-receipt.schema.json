@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/zeroshiki/schemas/incident-containment-receipt.schema.json",
+  "title": "Incident Containment Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "record_type",
+    "containment_id",
+    "agent_id",
+    "authority_domain_id",
+    "detected_at",
+    "contained_at",
+    "incident_type",
+    "severity",
+    "detector",
+    "affected",
+    "immediate_actions",
+    "revocation_record_ids",
+    "zeroization_id",
+    "required_outcome",
+    "status"
+  ],
+  "properties": {
+    "schema_version": {"const": "0.5.0"},
+    "record_type": {"const": "incident_containment_receipt"},
+    "containment_id": {"type": "string", "pattern": "^incident-containment:[A-Za-z0-9._:-]+$"},
+    "agent_id": {"type": "string", "minLength": 1},
+    "authority_domain_id": {"type": "string", "pattern": "^authority-domain:[A-Za-z0-9._:-]+$"},
+    "detected_at": {"type": "string", "format": "date-time"},
+    "contained_at": {"type": "string", "format": "date-time"},
+    "incident_type": {
+      "type": "string",
+      "enum": [
+        "revocation_during_execution",
+        "evidence_tamper",
+        "context_drift",
+        "tool_substitution",
+        "data_egress_violation",
+        "execution_replay",
+        "unknown"
+      ]
+    },
+    "severity": {"type": "string", "enum": ["moderate", "high", "critical"]},
+    "detector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["detector_id", "detector_type", "independent_from_agent"],
+      "properties": {
+        "detector_id": {"type": "string", "minLength": 1},
+        "detector_type": {"type": "string", "enum": ["runtime_guard", "audit_service", "human_operator"]},
+        "independent_from_agent": {"const": true}
+      }
+    },
+    "affected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["grant_ids", "execution_token_ids", "execution_context_ids", "tool_attestation_ids", "trace_ids"],
+      "properties": {
+        "grant_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^capability-grant:[A-Za-z0-9._:-]+$"}},
+        "execution_token_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^execution-token:[A-Za-z0-9._:-]+$"}},
+        "execution_context_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^execution-context:[A-Za-z0-9._:-]+$"}},
+        "tool_attestation_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^tool-attestation:[A-Za-z0-9._:-]+$"}},
+        "trace_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^runtime-trace:[A-Za-z0-9._:-]+$"}}
+      }
+    },
+    "immediate_actions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_suspended",
+        "tokens_invalidated",
+        "network_blocked",
+        "credentials_quarantined",
+        "context_quarantined",
+        "evidence_snapshot_preserved",
+        "revocation_initiated"
+      ],
+      "properties": {
+        "execution_suspended": {"type": "boolean"},
+        "tokens_invalidated": {"type": "boolean"},
+        "network_blocked": {"type": "boolean"},
+        "credentials_quarantined": {"type": "boolean"},
+        "context_quarantined": {"type": "boolean"},
+        "evidence_snapshot_preserved": {"type": "boolean"},
+        "revocation_initiated": {"type": "boolean"}
+      }
+    },
+    "revocation_record_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^capability-revocation:[A-Za-z0-9._:-]+$"}
+    },
+    "zeroization_id": {"type": "string", "pattern": "^zeroization:[A-Za-z0-9._:-]+$"},
+    "required_outcome": {"const": "zeroize"},
+    "status": {"type": "string", "enum": ["contained", "containment_failed", "escalated"]}
+  }
+}
