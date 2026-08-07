@@ -1,4 +1,4 @@
-schema_version: 0.4.0
+schema_version: 0.5.0
 record_type: runtime_trace_record
 trace_id: runtime-trace:demo:001
 agent_id: agent:worker:001
@@ -68,3 +68,4 @@ data_egress_authorization_id: null
 context_drift_observed: false
 tool_substitution_observed: false
 data_egress_violation_observed: false
+
