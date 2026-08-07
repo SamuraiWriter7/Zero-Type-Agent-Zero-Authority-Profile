@@ -1,0 +1,134 @@
+schema_version: 0.5.0
+record_type: authority_evidence_chain
+chain_id: authority-evidence-chain:fail:broken-link
+profile_version: 0.5.0
+agent_id: agent:worker:001
+authority_domain_id: authority-domain:demo:001
+generated_at: '2026-08-04T01:11:30Z'
+canonicalization: jcs-like-sorted-json-v1
+hash_algorithm: sha256
+recorder:
+  recorder_id: audit-recorder:demo:001
+  recorder_type: audit_service
+  independent_from_agent: true
+entries:
+- sequence: 1
+  record_type: capability_grant
+  record_id: capability-grant:demo:child-001
+  record_digest: sha256:cd23e0cdd386c83ba3049cf041a16d1197dc8551e5e3bc9f89dfbe3b4896a13d
+  previous_entry_digest: genesis
+  observed_at: '2026-08-04T01:02:00Z'
+  entry_digest: sha256:9b42353a626d2a70b5c95c90b899b0125607f8818bb2794846a4c5b50b7a2725
+- sequence: 2
+  record_type: capability_renewal_record
+  record_id: capability-renewal:demo:001
+  record_digest: sha256:dc512288fda36eef4b9c5200a10ce9d36c06e97219a8ec91c5c1365d08765e7a
+  previous_entry_digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+  observed_at: '2026-08-04T01:09:00Z'
+  entry_digest: sha256:f5cdae3202a02f91f1afab2d1ee42c72044ed409c486a40be7f21ead1819a0b2
+- sequence: 3
+  record_type: execution_context_attestation
+  record_id: execution-context:demo:low-001
+  record_digest: sha256:4499770f75e35421fe81b469cf0f1cdcf7346061ca0ceadfeec733851c5111f5
+  previous_entry_digest: sha256:f5cdae3202a02f91f1afab2d1ee42c72044ed409c486a40be7f21ead1819a0b2
+  observed_at: '2026-08-04T01:10:00Z'
+  entry_digest: sha256:9ca75fe7d884e358ea5e6bea592ac352d8ebfa8d2e9da3980e627e3b20435170
+- sequence: 4
+  record_type: tool_identity_attestation
+  record_id: tool-attestation:demo:low-001
+  record_digest: sha256:a6eaa12558ba3efb3fec31c83a8a9cfc4ca20f793501bbd90c3bf46135e891c1
+  previous_entry_digest: sha256:9ca75fe7d884e358ea5e6bea592ac352d8ebfa8d2e9da3980e627e3b20435170
+  observed_at: '2026-08-04T01:10:05Z'
+  entry_digest: sha256:44a39bf1969f83ffce7389a6fa595c50fddf454d94240a88b416ce4301dde56e
+- sequence: 5
+  record_type: risk_classification_assessment
+  record_id: risk-assessment:demo:low-001
+  record_digest: sha256:a4b9a66e4f3d3f1dace0b5d2502924218db2af9cb298ba01ae74112c317ff775
+  previous_entry_digest: sha256:44a39bf1969f83ffce7389a6fa595c50fddf454d94240a88b416ce4301dde56e
+  observed_at: '2026-08-04T01:10:30Z'
+  entry_digest: sha256:b184b4c0bfb7d8a79c839b8bfa626d95ecd1cacc609c17f135cbea65bce28210
+- sequence: 6
+  record_type: authorization_quorum_receipt
+  record_id: authorization-quorum:demo:low-001
+  record_digest: sha256:33f909f68a8a4c9a95009e672d5160fb206d08eb459410420409c96f3444c4c8
+  previous_entry_digest: sha256:b184b4c0bfb7d8a79c839b8bfa626d95ecd1cacc609c17f135cbea65bce28210
+  observed_at: '2026-08-04T01:10:40Z'
+  entry_digest: sha256:8cbdebc0c57aa296ad1f21870a1ecc5919ce9401b0cb924e7ebd6cc45774f0ef
+- sequence: 7
+  record_type: runtime_interlock_record
+  record_id: runtime-interlock:demo:low-001
+  record_digest: sha256:0adf8c7cef658c6d8b9fc19689a93edf06f0641152df1b7ddf36dd539b780f15
+  previous_entry_digest: sha256:8cbdebc0c57aa296ad1f21870a1ecc5919ce9401b0cb924e7ebd6cc45774f0ef
+  observed_at: '2026-08-04T01:10:50Z'
+  entry_digest: sha256:3b3a8672b580900ccac596ae32ae59a34a47233da3ddfc1c9956169acafca8c4
+- sequence: 8
+  record_type: action_gate_receipt
+  record_id: action-gate:demo:001
+  record_digest: sha256:304651df843a449b9293620fba621be777b1a37a84563509f4aeed9ca177a089
+  previous_entry_digest: sha256:3b3a8672b580900ccac596ae32ae59a34a47233da3ddfc1c9956169acafca8c4
+  observed_at: '2026-08-04T01:11:00Z'
+  entry_digest: sha256:445bdd691feeaa4864f7d16f2b8d32003b94695570a2a45c6c4d7ac01ad577f8
+- sequence: 9
+  record_type: execution_continuity_receipt
+  record_id: execution-continuity:demo:001
+  record_digest: sha256:b7573e3c6dacfffea0876f4277344674cba875c84601cb6317d4a6415ccd27b0
+  previous_entry_digest: sha256:445bdd691feeaa4864f7d16f2b8d32003b94695570a2a45c6c4d7ac01ad577f8
+  observed_at: '2026-08-04T01:11:20Z'
+  entry_digest: sha256:c505bde466db4a82bb8ef60813eab8ef39b966334c9893f1f4f4b9390da2deda
+- sequence: 10
+  record_type: capability_revocation_record
+  record_id: capability-revocation:demo:001
+  record_digest: sha256:dabbb86170e5e9140c9791bdae96a93d671a2ede1bc8658cda3c548dc374fdfe
+  previous_entry_digest: sha256:c505bde466db4a82bb8ef60813eab8ef39b966334c9893f1f4f4b9390da2deda
+  observed_at: '2026-08-04T01:11:25Z'
+  entry_digest: sha256:1cbdacf3b6d02a7a266a45b014015963ac92c9879128d416b9befb29c3ba0885
+- sequence: 11
+  record_type: execution_continuity_receipt
+  record_id: execution-continuity:demo:002
+  record_digest: sha256:10392f807a6827bd869a90e04d51db6c4ed49352ef633ec16c6c769712bccad3
+  previous_entry_digest: sha256:1cbdacf3b6d02a7a266a45b014015963ac92c9879128d416b9befb29c3ba0885
+  observed_at: '2026-08-04T01:11:26Z'
+  entry_digest: sha256:4b6828e8dfd4e3b2fc40d84c476e21ca8a8ac0bd857a1d6331c531335a2dd025
+- sequence: 12
+  record_type: runtime_trace_record
+  record_id: runtime-trace:demo:001
+  record_digest: sha256:92e3d2060d3bc434c67314381640125a1985bd8a71ffd083ac4078ded02f741a
+  previous_entry_digest: sha256:4b6828e8dfd4e3b2fc40d84c476e21ca8a8ac0bd857a1d6331c531335a2dd025
+  observed_at: '2026-08-04T01:11:27Z'
+  entry_digest: sha256:bb7f151ec447e66ae72c3a32b8083e1f66e6cd63b91a66b7aa3ef9080817d13c
+- sequence: 13
+  record_type: incident_containment_receipt
+  record_id: incident-containment:demo:001
+  record_digest: sha256:9c0a531ae4b38c8f94e3f7c3bc03b3b9d566ca46b3d63ede7e32773a5bdab880
+  previous_entry_digest: sha256:bb7f151ec447e66ae72c3a32b8083e1f66e6cd63b91a66b7aa3ef9080817d13c
+  observed_at: '2026-08-04T01:11:28Z'
+  entry_digest: sha256:e80aba7976c4f383500a77946895f7769bee1efcb7a33012f1808a6517633fd6
+- sequence: 14
+  record_type: emergency_zeroization_record
+  record_id: zeroization:demo:001
+  record_digest: sha256:97765d2d482d8ba74b3bcec6ac643f2686b3f193084472f04a974b05cee0f117
+  previous_entry_digest: sha256:e80aba7976c4f383500a77946895f7769bee1efcb7a33012f1808a6517633fd6
+  observed_at: '2026-08-04T01:11:28Z'
+  entry_digest: sha256:eee36b769145626bc59ccb8567167c1473329d24733fc77e4ff73f14262aa05d
+- sequence: 15
+  record_type: zero_state_record
+  record_id: zero-state:demo:post-revocation-001
+  record_digest: sha256:722d3ded7ca3e56be9637a3b5913b36203d4362cf2fd613058218c5c4b930977
+  previous_entry_digest: sha256:eee36b769145626bc59ccb8567167c1473329d24733fc77e4ff73f14262aa05d
+  observed_at: '2026-08-04T01:11:28Z'
+  entry_digest: sha256:bbd350ae29baef3cde10c8f09aab96530a42e934dc36ce00dced5ac3f20ee5e9
+- sequence: 16
+  record_type: execution_closure_receipt
+  record_id: execution-closure:demo:001
+  record_digest: sha256:b3269cfec0481a5c7e2f0771b775509b819ada31fa1e16ff7b2555d7c0bd1d4d
+  previous_entry_digest: sha256:bbd350ae29baef3cde10c8f09aab96530a42e934dc36ce00dced5ac3f20ee5e9
+  observed_at: '2026-08-04T01:11:29Z'
+  entry_digest: sha256:9ae0b5f0002cf096652db776e444faf67d98e07433de0f3d497b69b636afaa2f
+chain_root: sha256:9ae0b5f0002cf096652db776e444faf67d98e07433de0f3d497b69b636afaa2f
+signature:
+  algorithm: ed25519
+  signer_id: audit-signer:demo:001
+  key_id: key:audit:demo:001
+  signed_chain_root: sha256:9ae0b5f0002cf096652db776e444faf67d98e07433de0f3d497b69b636afaa2f
+  signature_ref: signature-store:demo:authority-chain-001
+status: sealed
