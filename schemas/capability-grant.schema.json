@@ -32,7 +32,7 @@
   ],
   "properties": {
     "schema_version": {
-      "const": "0.4.0"
+      "const": "0.5.0"
     },
     "record_type": {
       "const": "capability_grant"
@@ -335,3 +335,4 @@
     }
   ]
 }
+
