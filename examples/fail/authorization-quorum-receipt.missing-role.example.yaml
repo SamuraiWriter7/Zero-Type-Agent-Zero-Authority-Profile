@@ -1,4 +1,4 @@
-schema_version: 0.4.0
+schema_version: 0.5.0
 record_type: authorization_quorum_receipt
 quorum_id: authorization-quorum:fail:missing-role-001
 risk_assessment_id: risk-assessment:demo:critical-001
@@ -42,3 +42,4 @@ checks:
   approvals_unexpired: true
   action_digest_consistent: true
 decision: satisfied
+
