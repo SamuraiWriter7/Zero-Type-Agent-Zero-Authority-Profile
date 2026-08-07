@@ -1,4 +1,4 @@
-schema_version: 0.4.0
+schema_version: 0.5.0
 record_type: irreversible_action_commitment
 commitment_id: action-commitment:fail:cooling-off-001
 risk_assessment_id: risk-assessment:demo:critical-001
@@ -26,3 +26,4 @@ checks:
   rollback_or_compensation_defined: true
   revocation_clear: true
 decision: committed
+
