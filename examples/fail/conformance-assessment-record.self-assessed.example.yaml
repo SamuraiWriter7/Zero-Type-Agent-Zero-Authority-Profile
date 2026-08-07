@@ -1,0 +1,51 @@
+schema_version: 0.5.0
+record_type: conformance_assessment_record
+assessment_id: conformance-assessment:fail:self
+profile_version: 0.5.0
+chain_id: authority-evidence-chain:demo:001
+chain_root: sha256:9ae0b5f0002cf096652db776e444faf67d98e07433de0f3d497b69b636afaa2f
+agent_id: agent:worker:001
+authority_domain_id: authority-domain:demo:001
+assessed_at: '2026-08-04T01:11:31Z'
+verifier:
+  verifier_id: agent:worker:001
+  verifier_type: conformance_suite
+  independent_from_agent: true
+  implementation_digest: sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+scope:
+  entry_count: 16
+  record_types:
+  - action_gate_receipt
+  - authorization_quorum_receipt
+  - capability_grant
+  - capability_renewal_record
+  - capability_revocation_record
+  - emergency_zeroization_record
+  - execution_closure_receipt
+  - execution_context_attestation
+  - execution_continuity_receipt
+  - incident_containment_receipt
+  - risk_classification_assessment
+  - runtime_interlock_record
+  - runtime_trace_record
+  - tool_identity_attestation
+  - zero_state_record
+checks:
+  schemas_valid: true
+  identifiers_unique: true
+  record_digests_match: true
+  chain_links_valid: true
+  timestamps_monotonic: true
+  bindings_complete: true
+  authorization_precedes_action: true
+  token_single_use: true
+  revocation_enforced: true
+  closure_complete: true
+  evidence_independent: true
+findings:
+- severity: info
+  code: ZERO_AUTHORITY_LIFECYCLE_VERIFIED
+  record_id: execution-closure:demo:001
+  detail: The execution authority was revoked, zeroized, closed, sealed, and independently
+    reproducible.
+result: conformant
