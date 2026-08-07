@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/zeroshiki/schemas/execution-closure-receipt.schema.json",
+  "title": "Execution Closure Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "record_type",
+    "closure_id",
+    "agent_id",
+    "authority_domain_id",
+    "grant_id",
+    "grant_epoch",
+    "receipt_id",
+    "execution_token_id",
+    "trace_id",
+    "incident_containment_id",
+    "zeroization_id",
+    "zero_state_record_id",
+    "closed_at",
+    "final_execution_status",
+    "token_consumption",
+    "checks",
+    "pending_external_effect_count",
+    "authority_after_closure",
+    "decision"
+  ],
+  "properties": {
+    "schema_version": {"const": "0.5.0"},
+    "record_type": {"const": "execution_closure_receipt"},
+    "closure_id": {"type": "string", "pattern": "^execution-closure:[A-Za-z0-9._:-]+$"},
+    "agent_id": {"type": "string", "minLength": 1},
+    "authority_domain_id": {"type": "string", "pattern": "^authority-domain:[A-Za-z0-9._:-]+$"},
+    "grant_id": {"type": "string", "pattern": "^capability-grant:[A-Za-z0-9._:-]+$"},
+    "grant_epoch": {"type": "integer", "minimum": 1},
+    "receipt_id": {"type": "string", "pattern": "^action-gate:[A-Za-z0-9._:-]+$"},
+    "execution_token_id": {"type": "string", "pattern": "^execution-token:[A-Za-z0-9._:-]+$"},
+    "trace_id": {"type": "string", "pattern": "^runtime-trace:[A-Za-z0-9._:-]+$"},
+    "incident_containment_id": {
+      "type": ["string", "null"],
+      "pattern": "^incident-containment:[A-Za-z0-9._:-]+$"
+    },
+    "zeroization_id": {
+      "type": ["string", "null"],
+      "pattern": "^zeroization:[A-Za-z0-9._:-]+$"
+    },
+    "zero_state_record_id": {
+      "type": ["string", "null"],
+      "pattern": "^zero-state:[A-Za-z0-9._:-]+$"
+    },
+    "closed_at": {"type": "string", "format": "date-time"},
+    "final_execution_status": {
+      "type": "string",
+      "enum": ["completed", "blocked", "failed", "zeroized"]
+    },
+    "token_consumption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["consumed_count", "first_consumed_at", "last_consumed_at", "replay_blocked", "nonce_retired"],
+      "properties": {
+        "consumed_count": {"type": "integer", "minimum": 0},
+        "first_consumed_at": {"type": "string", "format": "date-time"},
+        "last_consumed_at": {"type": "string", "format": "date-time"},
+        "replay_blocked": {"type": "boolean"},
+        "nonce_retired": {"type": "boolean"}
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "trace_finalized",
+        "token_single_use",
+        "no_pending_external_effects",
+        "outputs_accounted",
+        "egress_reconciled",
+        "credentials_expired_or_destroyed",
+        "child_tasks_closed",
+        "recorder_finalized",
+        "evidence_ready_for_sealing"
+      ],
+      "properties": {
+        "trace_finalized": {"type": "boolean"},
+        "token_single_use": {"type": "boolean"},
+        "no_pending_external_effects": {"type": "boolean"},
+        "outputs_accounted": {"type": "boolean"},
+        "egress_reconciled": {"type": "boolean"},
+        "credentials_expired_or_destroyed": {"type": "boolean"},
+        "child_tasks_closed": {"type": "boolean"},
+        "recorder_finalized": {"type": "boolean"},
+        "evidence_ready_for_sealing": {"type": "boolean"}
+      }
+    },
+    "pending_external_effect_count": {"type": "integer", "minimum": 0},
+    "authority_after_closure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["external_action_allowed", "active_execution_token_ids", "grant_status", "revocation_epoch"],
+      "properties": {
+        "external_action_allowed": {"const": false},
+        "active_execution_token_ids": {
+          "type": "array",
+          "maxItems": 0,
+          "items": {"type": "string"}
+        },
+        "grant_status": {"type": "string", "enum": ["active", "expired", "revoked"]},
+        "revocation_epoch": {"type": "integer", "minimum": 0}
+      }
+    },
+    "decision": {"type": "string", "enum": ["closed", "incomplete", "quarantined"]}
+  }
+}
