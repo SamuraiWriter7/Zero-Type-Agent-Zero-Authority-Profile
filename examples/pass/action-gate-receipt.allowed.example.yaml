@@ -1,4 +1,4 @@
-schema_version: 0.4.0
+schema_version: 0.5.0
 record_type: action_gate_receipt
 receipt_id: action-gate:demo:001
 agent_id: agent:worker:001
