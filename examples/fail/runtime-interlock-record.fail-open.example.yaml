@@ -1,4 +1,4 @@
-schema_version: 0.4.0
+schema_version: 0.5.0
 record_type: runtime_interlock_record
 interlock_id: runtime-interlock:fail:fail-open-001
 agent_id: agent:worker:001
@@ -30,3 +30,4 @@ checks:
 decision: permit
 triggers:
 - monitor_failure
+
