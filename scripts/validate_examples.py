@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Validate Zero-Type Agent Zero-Authority Profile v0.4 examples."""
+"""Validate Zero-Type Agent Zero-Authority Profile v0.5 examples."""
 
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 from collections import defaultdict
@@ -35,6 +36,10 @@ SCHEMA_BY_RECORD_TYPE = {
     "execution_continuity_receipt": SCHEMA_DIR / "execution-continuity-receipt.schema.json",
     "runtime_trace_record": SCHEMA_DIR / "runtime-trace-record.schema.json",
     "emergency_zeroization_record": SCHEMA_DIR / "emergency-zeroization-record.schema.json",
+    "incident_containment_receipt": SCHEMA_DIR / "incident-containment-receipt.schema.json",
+    "execution_closure_receipt": SCHEMA_DIR / "execution-closure-receipt.schema.json",
+    "authority_evidence_chain": SCHEMA_DIR / "authority-evidence-chain.schema.json",
+    "conformance_assessment_record": SCHEMA_DIR / "conformance-assessment-record.schema.json",
 }
 
 PRIMARY_ID_FIELD = {
@@ -54,6 +59,10 @@ PRIMARY_ID_FIELD = {
     "execution_continuity_receipt": "continuity_id",
     "runtime_trace_record": "trace_id",
     "emergency_zeroization_record": "zeroization_id",
+    "incident_containment_receipt": "containment_id",
+    "execution_closure_receipt": "closure_id",
+    "authority_evidence_chain": "chain_id",
+    "conformance_assessment_record": "assessment_id",
 }
 
 EXTERNAL_EFFECT_EVENTS = {
@@ -76,6 +85,32 @@ def load_json(path: Path) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ValueError("schema root must be an object")
     return data
+
+
+def canonical_json_bytes(value: Any) -> bytes:
+    """Return the profile's deterministic JSON representation."""
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+
+
+def sha256_digest(value: Any) -> str:
+    return "sha256:" + hashlib.sha256(canonical_json_bytes(value)).hexdigest()
+
+
+def primary_identifier(record: dict[str, Any]) -> str | None:
+    field = PRIMARY_ID_FIELD.get(record.get("record_type"))
+    value = record.get(field) if field else None
+    return str(value) if value else None
+
+
+def evidence_entry_payload(entry: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "sequence": entry.get("sequence"),
+        "record_type": entry.get("record_type"),
+        "record_id": entry.get("record_id"),
+        "record_digest": entry.get("record_digest"),
+        "previous_entry_digest": entry.get("previous_entry_digest"),
+        "observed_at": entry.get("observed_at"),
+    }
 
 
 def parse_datetime(value: Any, field_name: str) -> tuple[datetime | None, list[str]]:
@@ -1268,6 +1303,251 @@ def v04_cross_record_errors(record: dict[str, Any], registry: dict[str, dict[str
     return errors
 
 
+def v05_semantic_errors(record: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    record_type = record.get("record_type")
+
+    if record_type == "authority_evidence_chain":
+        entries = record.get("entries", [])
+        sequences = [entry.get("sequence") for entry in entries]
+        if sequences != list(range(1, len(entries) + 1)):
+            errors.append("entries.sequence must be contiguous and start at 1")
+        record_ids = [entry.get("record_id") for entry in entries]
+        if len(record_ids) != len(set(record_ids)):
+            errors.append("authority evidence chain must not contain duplicate record_id values")
+        previous_time: datetime | None = None
+        for index, entry in enumerate(entries):
+            observed_at, date_errors = parse_datetime(entry.get("observed_at"), f"entries[{index}].observed_at")
+            errors.extend(date_errors)
+            if observed_at and previous_time and observed_at < previous_time:
+                errors.append("authority evidence entries must be ordered chronologically")
+            if observed_at:
+                previous_time = observed_at
+        if record.get("recorder", {}).get("recorder_id") == record.get("agent_id"):
+            errors.append("agent must not record its own authority evidence chain")
+        signature = record.get("signature", {})
+        if signature.get("signer_id") == record.get("agent_id"):
+            errors.append("agent must not sign its own authority evidence chain")
+        if signature.get("signed_chain_root") != record.get("chain_root"):
+            errors.append("signature.signed_chain_root must equal chain_root")
+
+    elif record_type == "execution_closure_receipt":
+        closed_at, e1 = parse_datetime(record.get("closed_at"), "closed_at")
+        first, e2 = parse_datetime(record.get("token_consumption", {}).get("first_consumed_at"), "token_consumption.first_consumed_at")
+        last, e3 = parse_datetime(record.get("token_consumption", {}).get("last_consumed_at"), "token_consumption.last_consumed_at")
+        errors.extend(e1 + e2 + e3)
+        if first and last and last < first:
+            errors.append("token_consumption.last_consumed_at must not precede first_consumed_at")
+        if closed_at and last and closed_at < last:
+            errors.append("closed_at must not precede token consumption")
+        if record.get("decision") == "closed":
+            errors.extend(all_true(record.get("checks", {}), (
+                "trace_finalized", "token_single_use", "no_pending_external_effects",
+                "outputs_accounted", "egress_reconciled", "credentials_expired_or_destroyed",
+                "child_tasks_closed", "recorder_finalized", "evidence_ready_for_sealing",
+            ), "checks"))
+            token = record.get("token_consumption", {})
+            if token.get("consumed_count") != 1:
+                errors.append("closed execution requires token_consumption.consumed_count=1")
+            if token.get("replay_blocked") is not True:
+                errors.append("closed execution requires replay_blocked=true")
+            if token.get("nonce_retired") is not True:
+                errors.append("closed execution requires nonce_retired=true")
+            if record.get("pending_external_effect_count") != 0:
+                errors.append("closed execution requires pending_external_effect_count=0")
+        if record.get("final_execution_status") == "zeroized":
+            if not record.get("zeroization_id"):
+                errors.append("zeroized execution closure requires zeroization_id")
+            if not record.get("zero_state_record_id"):
+                errors.append("zeroized execution closure requires zero_state_record_id")
+            if record.get("authority_after_closure", {}).get("grant_status") != "revoked":
+                errors.append("zeroized execution closure requires grant_status=revoked")
+
+    elif record_type == "conformance_assessment_record":
+        if record.get("verifier", {}).get("verifier_id") == record.get("agent_id"):
+            errors.append("agent must not verify its own conformance")
+        if record.get("result") == "conformant":
+            errors.extend(all_true(record.get("checks", {}), (
+                "schemas_valid", "identifiers_unique", "record_digests_match",
+                "chain_links_valid", "timestamps_monotonic", "bindings_complete",
+                "authorization_precedes_action", "token_single_use", "revocation_enforced",
+                "closure_complete", "evidence_independent",
+            ), "checks"))
+            serious = [finding for finding in record.get("findings", []) if finding.get("severity") in {"error", "critical"}]
+            if serious:
+                errors.append("conformant assessment must not contain error or critical findings")
+
+    elif record_type == "incident_containment_receipt":
+        detected_at, e1 = parse_datetime(record.get("detected_at"), "detected_at")
+        contained_at, e2 = parse_datetime(record.get("contained_at"), "contained_at")
+        errors.extend(e1 + e2)
+        if detected_at and contained_at and contained_at < detected_at:
+            errors.append("contained_at must not precede detected_at")
+        if record.get("detector", {}).get("detector_id") == record.get("agent_id"):
+            errors.append("agent must not be the sole detector of its own incident")
+        if record.get("status") == "contained":
+            errors.extend(all_true(record.get("immediate_actions", {}), (
+                "execution_suspended", "tokens_invalidated", "network_blocked",
+                "credentials_quarantined", "context_quarantined",
+                "evidence_snapshot_preserved", "revocation_initiated",
+            ), "immediate_actions"))
+
+    return errors
+
+
+def authority_chain_errors(record: dict[str, Any], registry: dict[str, dict[str, Any]]) -> list[str]:
+    errors: list[str] = []
+    entries = record.get("entries", [])
+    previous_digest = "genesis"
+    previous_time: datetime | None = None
+    seen_types: list[str] = []
+    for index, entry in enumerate(entries):
+        referenced = registry.get(entry.get("record_id"))
+        if referenced is None:
+            errors.append(f"evidence entry record_id not found: {entry.get('record_id')}")
+            continue
+        if referenced.get("record_type") != entry.get("record_type"):
+            errors.append(f"evidence entry record_type mismatch: {entry.get('record_id')}")
+        if primary_identifier(referenced) != entry.get("record_id"):
+            errors.append(f"evidence entry primary identifier mismatch: {entry.get('record_id')}")
+        expected_record_digest = sha256_digest(referenced)
+        if entry.get("record_digest") != expected_record_digest:
+            errors.append(f"record digest mismatch: {entry.get('record_id')}")
+        if entry.get("previous_entry_digest") != previous_digest:
+            errors.append(f"broken evidence chain link at sequence {entry.get('sequence')}")
+        expected_entry_digest = sha256_digest(evidence_entry_payload(entry))
+        if entry.get("entry_digest") != expected_entry_digest:
+            errors.append(f"entry digest mismatch at sequence {entry.get('sequence')}")
+        previous_digest = entry.get("entry_digest")
+        observed_at, date_errors = parse_datetime(entry.get("observed_at"), f"entries[{index}].observed_at")
+        errors.extend(date_errors)
+        if observed_at and previous_time and observed_at < previous_time:
+            errors.append("authority evidence timestamps are not monotonic")
+        if observed_at:
+            previous_time = observed_at
+        seen_types.append(str(entry.get("record_type")))
+        for field in ("agent_id", "authority_domain_id"):
+            if field in referenced and referenced.get(field) != record.get(field):
+                errors.append(f"evidence entry {field} differs from chain: {entry.get('record_id')}")
+    if entries and record.get("chain_root") != entries[-1].get("entry_digest"):
+        errors.append("chain_root must equal the final entry_digest")
+    required_types = {"capability_grant", "action_gate_receipt", "runtime_trace_record", "execution_closure_receipt"}
+    missing = sorted(required_types.difference(seen_types))
+    if missing:
+        errors.append(f"authority evidence chain missing required record types: {missing}")
+    order = {record_type: index for index, record_type in enumerate(seen_types)}
+    if "action_gate_receipt" in order and "runtime_trace_record" in order and order["action_gate_receipt"] > order["runtime_trace_record"]:
+        errors.append("action authorization must precede runtime trace")
+    if "runtime_trace_record" in order and "execution_closure_receipt" in order and order["runtime_trace_record"] > order["execution_closure_receipt"]:
+        errors.append("runtime trace must precede execution closure")
+    return errors
+
+
+def v05_cross_record_errors(record: dict[str, Any], registry: dict[str, dict[str, Any]]) -> list[str]:
+    errors: list[str] = []
+    record_type = record.get("record_type")
+
+    if record_type == "authority_evidence_chain":
+        errors.extend(authority_chain_errors(record, registry))
+
+    elif record_type == "execution_closure_receipt":
+        gate = registry.get(record.get("receipt_id"))
+        trace = registry.get(record.get("trace_id"))
+        if gate is None:
+            errors.append(f"receipt_id not found: {record.get('receipt_id')}")
+        if trace is None:
+            errors.append(f"trace_id not found: {record.get('trace_id')}")
+        if gate:
+            for field in ("agent_id", "authority_domain_id", "grant_id", "grant_epoch"):
+                if record.get(field) != gate.get(field):
+                    errors.append(f"execution closure {field} differs from action gate")
+            if gate.get("execution_token", {}).get("token_id") != record.get("execution_token_id"):
+                errors.append("execution closure token differs from action gate")
+        if trace:
+            for field in ("agent_id", "authority_domain_id", "grant_id", "grant_epoch", "receipt_id", "execution_token_id"):
+                if record.get(field) != trace.get(field):
+                    errors.append(f"execution closure {field} differs from runtime trace")
+            if record.get("final_execution_status") != trace.get("final_status"):
+                errors.append("execution closure final status differs from runtime trace")
+            closed_at, _ = parse_datetime(record.get("closed_at"), "closed_at")
+            trace_completed, _ = parse_datetime(trace.get("completed_at"), "trace.completed_at")
+            if closed_at and trace_completed and closed_at < trace_completed:
+                errors.append("execution closure occurs before runtime trace completion")
+        if record.get("incident_containment_id") and registry.get(record.get("incident_containment_id")) is None:
+            errors.append(f"incident_containment_id not found: {record.get('incident_containment_id')}")
+        zeroization = registry.get(record.get("zeroization_id")) if record.get("zeroization_id") else None
+        zero_state = registry.get(record.get("zero_state_record_id")) if record.get("zero_state_record_id") else None
+        if record.get("final_execution_status") == "zeroized":
+            if zeroization is None:
+                errors.append(f"zeroization_id not found: {record.get('zeroization_id')}")
+            if zero_state is None:
+                errors.append(f"zero_state_record_id not found: {record.get('zero_state_record_id')}")
+            if zeroization and zeroization.get("final_state", {}).get("zero_state_record_id") != record.get("zero_state_record_id"):
+                errors.append("execution closure zero state differs from zeroization record")
+            if zero_state and zero_state.get("authority_domain_id") != record.get("authority_domain_id"):
+                errors.append("execution closure zero state has different authority domain")
+
+    elif record_type == "incident_containment_receipt":
+        for revocation_id in record.get("revocation_record_ids", []):
+            revocation = registry.get(revocation_id)
+            if revocation is None:
+                errors.append(f"revocation record not found: {revocation_id}")
+            elif revocation.get("authority_domain_id") != record.get("authority_domain_id"):
+                errors.append("incident revocation has different authority domain")
+        zeroization = registry.get(record.get("zeroization_id"))
+        if zeroization is None:
+            errors.append(f"zeroization_id not found: {record.get('zeroization_id')}")
+        else:
+            if zeroization.get("agent_id") != record.get("agent_id"):
+                errors.append("incident zeroization has different agent")
+            if zeroization.get("authority_domain_id") != record.get("authority_domain_id"):
+                errors.append("incident zeroization has different authority domain")
+            contained_at, _ = parse_datetime(record.get("contained_at"), "contained_at")
+            completed_at, _ = parse_datetime(zeroization.get("completed_at"), "zeroization.completed_at")
+            if contained_at and completed_at and contained_at > completed_at:
+                errors.append("incident marked contained after referenced zeroization completion")
+        token_map = token_receipts(registry)
+        for token_id in record.get("affected", {}).get("execution_token_ids", []):
+            if token_id not in token_map:
+                errors.append(f"affected execution token not found: {token_id}")
+        for field, expected_type in (
+            ("grant_ids", "capability_grant"),
+            ("execution_context_ids", "execution_context_attestation"),
+            ("tool_attestation_ids", "tool_identity_attestation"),
+            ("trace_ids", "runtime_trace_record"),
+        ):
+            for record_id in record.get("affected", {}).get(field, []):
+                referenced = registry.get(record_id)
+                if referenced is None:
+                    errors.append(f"affected record not found: {record_id}")
+                elif referenced.get("record_type") != expected_type:
+                    errors.append(f"affected record has wrong type: {record_id}")
+
+    elif record_type == "conformance_assessment_record":
+        chain = registry.get(record.get("chain_id"))
+        if chain is None:
+            return [f"chain_id not found: {record.get('chain_id')}"]
+        if record.get("chain_root") != chain.get("chain_root"):
+            errors.append("conformance chain_root differs from evidence chain")
+        for field in ("agent_id", "authority_domain_id"):
+            if record.get(field) != chain.get(field):
+                errors.append(f"conformance {field} differs from evidence chain")
+        if record.get("scope", {}).get("entry_count") != len(chain.get("entries", [])):
+            errors.append("conformance scope.entry_count differs from evidence chain")
+        chain_types = sorted({entry.get("record_type") for entry in chain.get("entries", [])})
+        if sorted(record.get("scope", {}).get("record_types", [])) != chain_types:
+            errors.append("conformance scope.record_types differs from evidence chain")
+        assessed_at, _ = parse_datetime(record.get("assessed_at"), "assessed_at")
+        generated_at, _ = parse_datetime(chain.get("generated_at"), "chain.generated_at")
+        if assessed_at and generated_at and assessed_at < generated_at:
+            errors.append("conformance assessment predates evidence chain generation")
+        chain_errors = authority_chain_errors(chain, registry)
+        if record.get("result") == "conformant" and chain_errors:
+            errors.append("conformant assessment references an invalid evidence chain")
+
+    return errors
+
+
 def validate_record(path: Path, schemas: dict[str, dict[str, Any]], registry: dict[str, dict[str, Any]]) -> list[str]:
     try:
         record = load_yaml(path)
@@ -1279,14 +1559,16 @@ def validate_record(path: Path, schemas: dict[str, dict[str, Any]], registry: di
     errors.extend(semantic_errors(record))
     errors.extend(v03_semantic_errors(record))
     errors.extend(v04_semantic_errors(record))
+    errors.extend(v05_semantic_errors(record))
     errors.extend(cross_record_errors(record, registry))
     errors.extend(v03_cross_record_errors(record, registry))
     errors.extend(v04_cross_record_errors(record, registry))
+    errors.extend(v05_cross_record_errors(record, registry))
     return errors
 
 
 def main() -> int:
-    print("=== Zero-Type Agent Zero-Authority Profile v0.4 Validation ===")
+    print("=== Zero-Type Agent Zero-Authority Profile v0.5 Validation ===")
     try:
         schemas = {record_type: load_json(path) for record_type, path in SCHEMA_BY_RECORD_TYPE.items()}
     except Exception as exc:  # noqa: BLE001
