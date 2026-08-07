@@ -1,0 +1,38 @@
+schema_version: 0.5.0
+record_type: execution_closure_receipt
+closure_id: execution-closure:fail:pending-effects
+agent_id: agent:worker:001
+authority_domain_id: authority-domain:demo:001
+grant_id: capability-grant:demo:child-001
+grant_epoch: 2
+receipt_id: action-gate:demo:001
+execution_token_id: execution-token:demo:001
+trace_id: runtime-trace:demo:001
+incident_containment_id: incident-containment:demo:001
+zeroization_id: zeroization:demo:001
+zero_state_record_id: zero-state:demo:post-revocation-001
+closed_at: '2026-08-04T01:11:29Z'
+final_execution_status: zeroized
+token_consumption:
+  consumed_count: 1
+  first_consumed_at: '2026-08-04T01:11:05Z'
+  last_consumed_at: '2026-08-04T01:11:05Z'
+  replay_blocked: true
+  nonce_retired: true
+checks:
+  trace_finalized: true
+  token_single_use: true
+  no_pending_external_effects: false
+  outputs_accounted: true
+  egress_reconciled: true
+  credentials_expired_or_destroyed: true
+  child_tasks_closed: true
+  recorder_finalized: true
+  evidence_ready_for_sealing: true
+pending_external_effect_count: 1
+authority_after_closure:
+  external_action_allowed: false
+  active_execution_token_ids: []
+  grant_status: revoked
+  revocation_epoch: 1
+decision: closed
