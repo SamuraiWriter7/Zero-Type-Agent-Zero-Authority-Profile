@@ -1,4 +1,4 @@
-schema_version: 0.4.0
+schema_version: 0.5.0
 record_type: data_egress_authorization
 egress_id: data-egress:fail:destination-001
 agent_id: agent:publisher:001
